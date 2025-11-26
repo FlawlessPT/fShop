@@ -1,0 +1,9 @@
+# Project exclude paths
+/out/
+.DS_STORE
+# IntelliJ project files to ignore
+.idea/workspace.xml
+.idea/uiDesigner.xml
+.idea/shelf/
+.idea/dataSources/
+.idea/httpRequests/

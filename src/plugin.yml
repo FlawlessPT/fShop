@@ -1,0 +1,5 @@
+name: fShop
+main: pt.flawless.fShop.FShop
+description: Shop plugin
+version: 1.0
+depend: [fAPI]
