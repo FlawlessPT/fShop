@@ -7,18 +7,31 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import pt.flawless.fShop.shops.SignShop;
+import pt.flawless.fShop.shops.SignShopImpl;
+import pt.flawless.fapi.logs.FConsoleLogger;
 
 public class SignClickListener implements Listener {
     @EventHandler
     public void onSignClickEvent(PlayerInteractEvent e) {
-        Player p = e.getPlayer();
+        Player player = e.getPlayer();
+
+        // A SignShop can only be destroyed while sneaking
+        if (player.isSneaking()) return;
+
         Block block = e.getClickedBlock();
 
         if (block.getState() instanceof Sign) {
-            Sign sign = (Sign) block.getState();
-//            SignShop signShop = new SignShop(e, p);
-//            p.sendMessage(p.getItemInHand().getEnchantments().toString());
-//            signShop.insertItemName(p.getItemInHand().getType());
+            SignShopImpl signShop = new SignShopImpl(new SignShop((Sign) block.getState(), player));
+
+            try {
+                if (signShop.isSignShop()) {
+                    signShop.insertItemInHand(player.getItemInHand());
+                    e.setCancelled(true);
+                }
+            } catch (Exception exception) {
+                FConsoleLogger.sendConsoleMessage(exception.getMessage());
+                e.setCancelled(true);
+            }
         }
     }
 }
