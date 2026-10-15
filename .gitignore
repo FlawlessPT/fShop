@@ -7,3 +7,8 @@
 .idea/shelf/
 .idea/dataSources/
 .idea/httpRequests/
+.idea/
+*.iml
+.gradle/
+build/
+libraries/*.jar
