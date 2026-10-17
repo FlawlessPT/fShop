@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS fshop_items (
+    world VARCHAR(64) NOT NULL,
+    x INT NOT NULL,
+    y INT NOT NULL,
+    z INT NOT NULL,
+    item MEDIUMTEXT NOT NULL,
+    PRIMARY KEY (world, x, y, z)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
