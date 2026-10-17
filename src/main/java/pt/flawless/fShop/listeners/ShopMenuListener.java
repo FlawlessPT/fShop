@@ -23,7 +23,7 @@ public class ShopMenuListener implements Listener {
         this.items = items;
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onClick(InventoryClickEvent e) {
         if (!(e.getInventory().getHolder() instanceof ShopMenu menu)) return;
         // Cancela sempre, antes de qualquer outra verificação: cobre shift-click vindo do inventário de baixo,
@@ -43,7 +43,7 @@ public class ShopMenuListener implements Listener {
         actions.execute(player, ready.get().offer(), ready.get().item(), action == ShopMenu.Action.BUY);
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onDrag(InventoryDragEvent e) {
         if (e.getInventory().getHolder() instanceof ShopMenu) {
             e.setCancelled(true);

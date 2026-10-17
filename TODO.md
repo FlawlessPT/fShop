@@ -39,3 +39,6 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 - Menu da loja: shift + botão direito abre um baú com o item (tooltip mostra encantamentos), comprar à esquerda e vender à direita; o item mostrado é limitado ao tamanho da pilha.
 - Teste manual no jogo: (1) shift + botão direito numa loja com item abre o menu; (2) o tooltip do item mostra os encantamentos; (3) clicar no item, num painel preto, com shift-click de itens do teu inventário, com teclas numéricas, a arrastar e com duplo clique não move nada; (4) comprar e vender pelos botões dá as mesmas mensagens e o novo saldo; (5) partir a placa com o menu aberto e clicar num botão fecha o menu e avisa; (6) shift + botão esquerdo continua a partir a placa (admin); (7) shift + botão direito numa loja sem item não abre menu; (8) sem `/login` não abre.
 - Ideia futura: botões de quantidade (x1, x8, x64) no menu.
+- Teste manual no jogo: abrir o menu, fazer /reload e confirmar que o menu fecha e não dá para tirar o item.
+- O menu e a transação não verificam a distância à placa (um jogador pode abrir o menu, afastar-se e continuar a trocar; `getBlockAt` pode carregar o chunk da placa).
+- Se o admin redefinir o item com um menu aberto, o menu continua a mostrar o item antigo (a troca já usa o novo).

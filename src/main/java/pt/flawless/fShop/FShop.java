@@ -2,6 +2,7 @@ package pt.flawless.fShop;
 
 import java.util.List;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import pt.flawless.fShop.listeners.ShopBreakListener;
@@ -10,6 +11,7 @@ import pt.flawless.fShop.listeners.ShopMenuListener;
 import pt.flawless.fShop.listeners.SignClickListener;
 import pt.flawless.fShop.shops.ShopActions;
 import pt.flawless.fShop.shops.ShopItems;
+import pt.flawless.fShop.shops.ShopMenu;
 import pt.flawless.fShop.shops.ShopTrade;
 import pt.flawless.fShop.shops.SqlShopItemRepository;
 import pt.flawless.fapi.database.DatabaseService;
@@ -76,6 +78,13 @@ public class FShop extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Sem isto, num /reload o menu aberto fica com um holder de outro classloader e o item pode ser retirado.
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.getOpenInventory() != null
+                    && player.getOpenInventory().getTopInventory().getHolder() instanceof ShopMenu) {
+                player.closeInventory();
+            }
+        }
         if (enabledOk) {
             consoleLogger.sendDisablePluginMessage();
         }
