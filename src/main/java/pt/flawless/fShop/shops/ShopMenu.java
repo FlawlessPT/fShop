@@ -24,10 +24,10 @@ public final class ShopMenu implements InventoryHolder {
 
     public enum Action { BUY, SELL, NONE }
 
+    // data values da lã (WOOL)
     private static final short GREEN = 5;
     private static final short GRAY = 7;
     private static final short RED = 14;
-    private static final short BLACK = 15;
 
     private final ShopKey key;
     private Inventory inventory;
@@ -73,26 +73,21 @@ public final class ShopMenu implements InventoryHolder {
         Inventory inventory = Bukkit.createInventory(holder, SIZE, "Loja");
         holder.inventory = inventory;
 
-        ItemStack filler = pane(BLACK, " ", List.of());
-        for (int slot = 0; slot < SIZE; slot++) {
-            inventory.setItem(slot, filler.clone());
-        }
-
         ItemStack shown = item.clone();
         shown.setAmount(Math.min(offer.quantity(), shown.getMaxStackSize()));
         inventory.setItem(ITEM_SLOT, shown);
 
         inventory.setItem(BUY_SLOT, offer.canBuy()
-                ? pane(GREEN, "§aComprar", buyLore(offer, format.apply(offer.buyCents())))
-                : pane(GRAY, "§7Indisponível", List.of("§7Esta loja não vende este item.")));
+                ? button(GREEN, "§aComprar", buyLore(offer, format.apply(offer.buyCents())))
+                : button(GRAY, "§7Indisponível", List.of("§7Esta loja não vende este item.")));
         inventory.setItem(SELL_SLOT, offer.canSell()
-                ? pane(RED, "§cVender", sellLore(offer, format.apply(offer.sellCents())))
-                : pane(GRAY, "§7Indisponível", List.of("§7Esta loja não compra este item.")));
+                ? button(RED, "§cVender", sellLore(offer, format.apply(offer.sellCents())))
+                : button(GRAY, "§7Indisponível", List.of("§7Esta loja não compra este item.")));
         return inventory;
     }
 
-    private static ItemStack pane(short color, String name, List<String> lore) {
-        ItemStack stack = new ItemStack(Material.STAINED_GLASS_PANE, 1, color);
+    private static ItemStack button(short color, String name, List<String> lore) {
+        ItemStack stack = new ItemStack(Material.WOOL, 1, color);
         ItemMeta meta = stack.getItemMeta();
         meta.setDisplayName(name);
         meta.setLore(lore);
