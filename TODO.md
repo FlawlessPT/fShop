@@ -4,7 +4,7 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 
 ## Funcionalidades
 - [x] Ligar as lojas à economia (fEconomy) via `EconomyApi` do fAPI.
-- [ ] Guardar as lojas: não encontrei persistência das lojas no código; usar o `DatabaseService` partilhado (`Databases.get()` + migração).
+- [x] Guardar o item de cada loja do servidor (tabela fshop_items, cache em memória).
 
 ## Código
 - [ ] O `MessagesManager` lê as mensagens de `getConfig()` (`Mensagens.playeroff`, etc.), mas o plugin não tem `config.yml` nos recursos nem chama `saveDefaultConfig()`: os valores vêm `null`. Criar o `config.yml` e gravá-lo por omissão.
@@ -16,12 +16,17 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 
 ## Depois da integração com a economia
 - Lojas de jogador: baú de stock ligado à placa, `transfer` para o dono, persistência (tabela `fshop_shops` com localização, dono por UUID, item com data value, quantidade e preços) e reconhecimento depois de reiniciar.
-- O item da loja é só o nome na linha 4: perde o data value (cores da lã, poções) e a durabilidade; `PlayerBag` conta só o tipo de item.
 - Código morto a decidir: `MessagesManager`, `VariablesManager`, `ItemAddCommand` (referem o plugin antigo).
 - `removeColorCodes` do `SignShopManager` devia ir para o fAPI.
 - Dependência `sqlite-jdbc` do `build.gradle.kts` já não é usada.
 - Se o preço da placa for demasiado alto (ex.: 90 mil milhões), o `deposit` pode estourar o `BIGINT` e a venda dá erro genérico.
-- `PlayerBag` compara só o `Material`: ignora data value, encantamentos e durabilidade.
+- Placas apagadas por outros meios que não partir (física, explosões, `/setblock`) deixam uma linha órfã em `fshop_items` (inofensiva; é limpa quando se recria uma placa no mesmo sítio).
+- Linhas de `fshop_items` que não descodificam são ignoradas em silêncio no arranque (registar).
+- Um item definido gasto/danificado é entregue gasto (a venda ignora durabilidade, a compra não a repõe).
+- Os itens das lojas de jogador (baú) continuam por fazer e vão reutilizar a tabela `fshop_items`.
+- Corrida put-depois-remove: gravar e apagar a mesma chave em seguida correm em threads diferentes do pool e podem trocar de ordem (encadear futuros por chave resolvia).
+- `compileOnly sqlite-jdbc` no `build.gradle.kts` pode já não ser necessário (não removido).
+- Teste manual no jogo: espada encantada e renomeada definida na placa, comprar dá a espada igual, vender uma espada simples recusa, reiniciar o servidor mantém o item.
 - O `inFlight` pode ficar preso e uma compra pode perder dinheiro se o scheduler recusar uma tarefa enquanto o plugin se desativa.
 - `ShopOffer.fromSign` aceita ids numéricos de item via `matchMaterial` e quantidades como `+5`.
 - `SignShopManager` (linhas ~104/110) compara o título com `equalsIgnoreCase("loja")` sem normalizar cores (só deteção, não a verificação de permissão).

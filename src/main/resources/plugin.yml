@@ -2,7 +2,7 @@ name: fShop
 main: pt.flawless.fShop.FShop
 description: Shop plugin
 version: 1.0
-depend: [fAPI, fEconomy]
+depend: [fAPI, fDatabase, fEconomy]
 permissions:
   fshop.admin:
     description: Allows creating and configuring server shops

@@ -63,16 +63,17 @@ public class SignShopImpl {
         }
     }
 
-    public void insertItemInHand(ItemStack itemInHand) {
+    /** Escreve o nome do item na linha 4. Devolve {@code true} só se escreveu (loja ainda sem item e item válido). */
+    public boolean insertItemInHand(ItemStack itemInHand) {
+        if (itemInHand == null || itemInHand.getType() == Material.AIR) return false;
+
         SignShopManager signShopManager = new SignShopManager(signShop.getSign(), signShop.getPlayer());
+        if (signShopManager.withItemInShop()) return false;
+
         String itemName = itemInHand.getType().name().toLowerCase();
-
-        if (signShopManager.withItemInShop()) return;
-
-        if (itemName.equalsIgnoreCase(Material.AIR.name())) return;
-
         String formattedItemName = WordUtils.capitalizeFully(itemName.replace("_", " "));
         signShopManager.setItemName(formattedItemName);
+        return true;
     }
 
     public boolean isServerShop() {

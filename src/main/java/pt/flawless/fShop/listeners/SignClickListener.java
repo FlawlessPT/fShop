@@ -12,6 +12,8 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import pt.flawless.fShop.shops.PlayerBag;
+import pt.flawless.fShop.shops.ShopItems;
+import pt.flawless.fShop.shops.ShopKey;
 import pt.flawless.fShop.shops.ShopOffer;
 import pt.flawless.fShop.shops.ShopTrade;
 import pt.flawless.fShop.shops.SignShop;
@@ -23,8 +25,11 @@ import pt.flawless.fapi.sounds.FSound;
 public class SignClickListener implements Listener {
     private final ShopTrade trade;
 
-    public SignClickListener(ShopTrade trade) {
+    private final ShopItems items;
+
+    public SignClickListener(ShopTrade trade, ShopItems items) {
         this.trade = trade;
+        this.items = items;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -49,7 +54,10 @@ public class SignClickListener implements Listener {
 
             if (!signShop.hasItem()) {
                 if (action == Action.RIGHT_CLICK_BLOCK && signShop.canEdit()) {
-                    signShop.insertItemInHand(player.getItemInHand());
+                    ItemStack inHand = player.getItemInHand();
+                    if (signShop.insertItemInHand(inHand)) {
+                        items.put(ShopKey.of(block), inHand);
+                    }
                 }
                 return;
             }
@@ -68,10 +76,13 @@ public class SignClickListener implements Listener {
 
             boolean buying = action == Action.RIGHT_CLICK_BLOCK;
             ShopOffer shopOffer = offer.get();
+            ItemStack item = items.get(ShopKey.of(block))
+                    .filter(stored -> stored.getType() == shopOffer.material())
+                    .orElseGet(() -> new ItemStack(shopOffer.material()));
             PlayerBag bag = new PlayerBag(player);
             CompletableFuture<ShopTrade.Result> result = buying
-                    ? trade.buy(player.getUniqueId(), shopOffer, new ItemStack(shopOffer.material()), bag)
-                    : trade.sell(player.getUniqueId(), shopOffer, new ItemStack(shopOffer.material()), bag);
+                    ? trade.buy(player.getUniqueId(), shopOffer, item, bag)
+                    : trade.sell(player.getUniqueId(), shopOffer, item, bag);
             result.thenAccept(r -> report(player, shopOffer, r, buying)).exceptionally(error -> {
                 FConsoleLogger.sendConsoleMessage(String.valueOf(error), EMessageTypeEnum.ERROR);
                 return null;
