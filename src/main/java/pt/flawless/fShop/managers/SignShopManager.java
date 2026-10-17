@@ -75,8 +75,13 @@ public class SignShopManager {
         return !this.creatableSign.getLine(3).equalsIgnoreCase("---");
     }
 
+    /** Título de loja do servidor, ignorando cores e espaços; usado também na criação (permissão). */
+    public static boolean isServerTitle(String line) {
+        return line != null && removeColorCodes(line).trim().equalsIgnoreCase("loja");
+    }
+
     public boolean isServerShop() {
-        return removeColorCodes(this.sign.getLine(0)).equalsIgnoreCase("loja");
+        return isServerTitle(this.sign.getLine(0));
     }
 
     /** Loja do servidor: só quem tem {@code fshop.admin}. Loja de jogador: só o dono (nome na linha 1). */
@@ -112,7 +117,7 @@ public class SignShopManager {
     }
 
     // TODO: Move to fAPI
-    private String removeColorCodes(String input) {
+    private static String removeColorCodes(String input) {
         if (input == null) return null;
         return input.replaceAll("§.", "");
     }
