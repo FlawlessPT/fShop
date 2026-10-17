@@ -2,6 +2,7 @@ package pt.flawless.fShop.shops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static pt.flawless.fShop.shops.ShopTrade.Result.BOUGHT;
 import static pt.flawless.fShop.shops.ShopTrade.Result.BUSY;
@@ -19,6 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pt.flawless.fapi.economy.AccountNotFoundException;
@@ -29,6 +31,7 @@ class ShopTradeTest {
 
     private static final UUID PLAYER = UUID.fromString("00000000-0000-0000-0000-000000000001");
     private static final ShopOffer OFFER = new ShopOffer(16, Material.DIAMOND, 1000, 500);
+    private static final ItemStack ITEM = new ItemStack(Material.DIAMOND);
 
     static class FakeEconomy implements EconomyApi {
         final List<String> calls = new ArrayList<>();
@@ -67,25 +70,30 @@ class ShopTradeTest {
         int items;
         boolean canHoldFirst = true;
         boolean canHoldLater = true;
+        ItemStack lastItem;
         private int canHoldCalls;
 
         @Override
-        public boolean canHold(Material material, int quantity) {
+        public boolean canHold(ItemStack item, int quantity) {
+            lastItem = item;
             return canHoldCalls++ == 0 ? canHoldFirst : canHoldLater;
         }
 
         @Override
-        public boolean has(Material material, int quantity) {
+        public boolean has(ItemStack item, int quantity) {
+            lastItem = item;
             return items >= quantity;
         }
 
         @Override
-        public void give(Material material, int quantity) {
+        public void give(ItemStack item, int quantity) {
+            lastItem = item;
             items += quantity;
         }
 
         @Override
-        public void take(Material material, int quantity) {
+        public void take(ItemStack item, int quantity) {
+            lastItem = item;
             items -= quantity;
         }
     }
@@ -105,7 +113,7 @@ class ShopTradeTest {
 
     @Test
     void buy_withdrawsThenGivesItems() {
-        assertEquals(BOUGHT, trade.buy(PLAYER, OFFER, bag).join());
+        assertEquals(BOUGHT, trade.buy(PLAYER, OFFER, ITEM, bag).join());
         assertEquals(List.of("withdraw 1000"), economy.calls);
         assertEquals(16, bag.items);
     }
@@ -113,14 +121,14 @@ class ShopTradeTest {
     @Test
     void buy_whenShopDoesNotSell_isNotAvailable() {
         ShopOffer sellOnly = new ShopOffer(16, Material.DIAMOND, 0, 500);
-        assertEquals(NOT_AVAILABLE, trade.buy(PLAYER, sellOnly, bag).join());
+        assertEquals(NOT_AVAILABLE, trade.buy(PLAYER, sellOnly, ITEM, bag).join());
         assertTrue(economy.calls.isEmpty());
     }
 
     @Test
     void buy_withoutSpace_doesNotTouchTheMoney() {
         bag.canHoldFirst = false;
-        assertEquals(NO_SPACE, trade.buy(PLAYER, OFFER, bag).join());
+        assertEquals(NO_SPACE, trade.buy(PLAYER, OFFER, ITEM, bag).join());
         assertTrue(economy.calls.isEmpty());
         assertEquals(0, bag.items);
     }
@@ -128,7 +136,7 @@ class ShopTradeTest {
     @Test
     void buy_whenSpaceDisappearsAfterWithdraw_refunds() {
         bag.canHoldLater = false;
-        assertEquals(NO_SPACE, trade.buy(PLAYER, OFFER, bag).join());
+        assertEquals(NO_SPACE, trade.buy(PLAYER, OFFER, ITEM, bag).join());
         assertEquals(List.of("withdraw 1000", "deposit 1000"), economy.calls);
         assertEquals(0, bag.items);
     }
@@ -136,7 +144,7 @@ class ShopTradeTest {
     @Test
     void buy_withInsufficientFunds_givesNothing() {
         economy.withdrawResult = CompletableFuture.failedFuture(new InsufficientFundsException(PLAYER, 0, 1000));
-        assertEquals(INSUFFICIENT_FUNDS, trade.buy(PLAYER, OFFER, bag).join());
+        assertEquals(INSUFFICIENT_FUNDS, trade.buy(PLAYER, OFFER, ITEM, bag).join());
         assertEquals(0, bag.items);
         assertTrue(errors.isEmpty());
     }
@@ -145,17 +153,17 @@ class ShopTradeTest {
     void buy_unwrapsCompletionException() {
         economy.withdrawResult = CompletableFuture.failedFuture(
                 new CompletionException(new InsufficientFundsException(PLAYER, 0, 1000)));
-        assertEquals(INSUFFICIENT_FUNDS, trade.buy(PLAYER, OFFER, bag).join());
+        assertEquals(INSUFFICIENT_FUNDS, trade.buy(PLAYER, OFFER, ITEM, bag).join());
 
         economy.withdrawResult = CompletableFuture.failedFuture(
                 new CompletionException(new AccountNotFoundException(PLAYER)));
-        assertEquals(NO_ACCOUNT, trade.buy(PLAYER, OFFER, bag).join());
+        assertEquals(NO_ACCOUNT, trade.buy(PLAYER, OFFER, ITEM, bag).join());
     }
 
     @Test
     void buy_withUnexpectedFailure_isErrorAndLogged() {
         economy.withdrawResult = CompletableFuture.failedFuture(new IllegalStateException("db em baixo"));
-        assertEquals(ERROR, trade.buy(PLAYER, OFFER, bag).join());
+        assertEquals(ERROR, trade.buy(PLAYER, OFFER, ITEM, bag).join());
         assertEquals(1, errors.size());
         assertEquals(0, bag.items);
     }
@@ -163,24 +171,24 @@ class ShopTradeTest {
     @Test
     void secondClickWhileFirstIsPending_isBusy_andGuardIsReleasedAfterwards() {
         economy.withdrawResult = new CompletableFuture<>();
-        CompletableFuture<ShopTrade.Result> first = trade.buy(PLAYER, OFFER, bag);
+        CompletableFuture<ShopTrade.Result> first = trade.buy(PLAYER, OFFER, ITEM, bag);
         assertFalse(first.isDone());
 
-        assertEquals(BUSY, trade.buy(PLAYER, OFFER, bag).join());
+        assertEquals(BUSY, trade.buy(PLAYER, OFFER, ITEM, bag).join());
         assertEquals(List.of("withdraw 1000"), economy.calls);
 
         economy.withdrawResult.complete(0L);
         assertEquals(BOUGHT, first.join());
 
         economy.withdrawResult = CompletableFuture.completedFuture(0L);
-        assertEquals(BOUGHT, trade.buy(PLAYER, OFFER, bag).join());
+        assertEquals(BOUGHT, trade.buy(PLAYER, OFFER, ITEM, bag).join());
         assertEquals(32, bag.items);
     }
 
     @Test
     void sell_takesItemsThenDeposits() {
         bag.items = 20;
-        assertEquals(SOLD, trade.sell(PLAYER, OFFER, bag).join());
+        assertEquals(SOLD, trade.sell(PLAYER, OFFER, ITEM, bag).join());
         assertEquals(List.of("deposit 500"), economy.calls);
         assertEquals(4, bag.items);
     }
@@ -189,14 +197,14 @@ class ShopTradeTest {
     void sell_whenShopDoesNotBuy_isNotAvailable() {
         ShopOffer buyOnly = new ShopOffer(16, Material.DIAMOND, 1000, 0);
         bag.items = 20;
-        assertEquals(NOT_AVAILABLE, trade.sell(PLAYER, buyOnly, bag).join());
+        assertEquals(NOT_AVAILABLE, trade.sell(PLAYER, buyOnly, ITEM, bag).join());
         assertEquals(20, bag.items);
     }
 
     @Test
     void sell_withoutEnoughItems_doesNotTouchTheMoney() {
         bag.items = 3;
-        assertEquals(NOT_ENOUGH_ITEMS, trade.sell(PLAYER, OFFER, bag).join());
+        assertEquals(NOT_ENOUGH_ITEMS, trade.sell(PLAYER, OFFER, ITEM, bag).join());
         assertTrue(economy.calls.isEmpty());
         assertEquals(3, bag.items);
     }
@@ -205,7 +213,7 @@ class ShopTradeTest {
     void sell_whenDepositFails_returnsTheItems() {
         bag.items = 20;
         economy.depositResult = CompletableFuture.failedFuture(new IllegalStateException("db em baixo"));
-        assertEquals(ERROR, trade.sell(PLAYER, OFFER, bag).join());
+        assertEquals(ERROR, trade.sell(PLAYER, OFFER, ITEM, bag).join());
         assertEquals(20, bag.items);
         assertEquals(1, errors.size());
     }
@@ -214,9 +222,22 @@ class ShopTradeTest {
     void failedRefund_isLoggedWithPlayerAndAmount() {
         bag.canHoldLater = false;
         economy.depositResult = CompletableFuture.failedFuture(new IllegalStateException("db em baixo"));
-        assertEquals(NO_SPACE, trade.buy(PLAYER, OFFER, bag).join());
+        assertEquals(NO_SPACE, trade.buy(PLAYER, OFFER, ITEM, bag).join());
         assertEquals(1, errors.size());
         assertTrue(errors.get(0).getMessage().contains(PLAYER.toString()));
         assertTrue(errors.get(0).getMessage().contains("1000"));
+    }
+
+    @Test
+    void buy_givesTheShopItem() {
+        trade.buy(PLAYER, OFFER, ITEM, bag).join();
+        assertSame(ITEM, bag.lastItem);
+    }
+
+    @Test
+    void sell_takesTheShopItem() {
+        bag.items = 20;
+        trade.sell(PLAYER, OFFER, ITEM, bag).join();
+        assertSame(ITEM, bag.lastItem);
     }
 }

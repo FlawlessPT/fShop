@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 import pt.flawless.fapi.economy.AccountNotFoundException;
 import pt.flawless.fapi.economy.EconomyApi;
 import pt.flawless.fapi.economy.InsufficientFundsException;
@@ -23,15 +23,15 @@ public final class ShopTrade {
         BOUGHT, SOLD, NOT_AVAILABLE, NO_SPACE, NOT_ENOUGH_ITEMS, INSUFFICIENT_FUNDS, NO_ACCOUNT, BUSY, ERROR
     }
 
-    /** O inventário do jogador, tal como a transação o vê. */
+    /** O inventário do jogador, tal como a transação o vê. {@code item} é o modelo da loja: nunca se altera. */
     public interface Bag {
-        boolean canHold(Material material, int quantity);
+        boolean canHold(ItemStack item, int quantity);
 
-        boolean has(Material material, int quantity);
+        boolean has(ItemStack item, int quantity);
 
-        void give(Material material, int quantity);
+        void give(ItemStack item, int quantity);
 
-        void take(Material material, int quantity);
+        void take(ItemStack item, int quantity);
     }
 
     private final EconomyApi economy;
@@ -55,42 +55,42 @@ public final class ShopTrade {
         }, mainThread);
     }
 
-    public CompletableFuture<Result> buy(UUID player, ShopOffer offer, Bag bag) {
+    public CompletableFuture<Result> buy(UUID player, ShopOffer offer, ItemStack item, Bag bag) {
         if (!offer.canBuy()) {
             return done(Result.NOT_AVAILABLE);
         }
         return guarded(player, () -> {
-            if (!bag.canHold(offer.material(), offer.quantity())) {
+            if (!bag.canHold(item, offer.quantity())) {
                 return done(Result.NO_SPACE);
             }
             return economy.withdraw(player, offer.buyCents()).handleAsync((balance, error) -> {
                 if (error != null) {
                     return failure(error);
                 }
-                if (!bag.canHold(offer.material(), offer.quantity())) {
+                if (!bag.canHold(item, offer.quantity())) {
                     refund(player, offer.buyCents());
                     return Result.NO_SPACE;
                 }
-                bag.give(offer.material(), offer.quantity());
+                bag.give(item, offer.quantity());
                 return Result.BOUGHT;
             }, mainThread);
         });
     }
 
-    public CompletableFuture<Result> sell(UUID player, ShopOffer offer, Bag bag) {
+    public CompletableFuture<Result> sell(UUID player, ShopOffer offer, ItemStack item, Bag bag) {
         if (!offer.canSell()) {
             return done(Result.NOT_AVAILABLE);
         }
         return guarded(player, () -> {
-            if (!bag.has(offer.material(), offer.quantity())) {
+            if (!bag.has(item, offer.quantity())) {
                 return done(Result.NOT_ENOUGH_ITEMS);
             }
-            bag.take(offer.material(), offer.quantity());
+            bag.take(item, offer.quantity());
             return economy.deposit(player, offer.sellCents()).handleAsync((balance, error) -> {
                 if (error == null) {
                     return Result.SOLD;
                 }
-                bag.give(offer.material(), offer.quantity());
+                bag.give(item, offer.quantity());
                 return failure(error);
             }, mainThread);
         });

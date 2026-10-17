@@ -10,6 +10,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
 import pt.flawless.fShop.shops.PlayerBag;
 import pt.flawless.fShop.shops.ShopOffer;
 import pt.flawless.fShop.shops.ShopTrade;
@@ -69,8 +70,8 @@ public class SignClickListener implements Listener {
             ShopOffer shopOffer = offer.get();
             PlayerBag bag = new PlayerBag(player);
             CompletableFuture<ShopTrade.Result> result = buying
-                    ? trade.buy(player.getUniqueId(), shopOffer, bag)
-                    : trade.sell(player.getUniqueId(), shopOffer, bag);
+                    ? trade.buy(player.getUniqueId(), shopOffer, new ItemStack(shopOffer.material()), bag)
+                    : trade.sell(player.getUniqueId(), shopOffer, new ItemStack(shopOffer.material()), bag);
             result.thenAccept(r -> report(player, shopOffer, r, buying)).exceptionally(error -> {
                 FConsoleLogger.sendConsoleMessage(String.valueOf(error), EMessageTypeEnum.ERROR);
                 return null;
