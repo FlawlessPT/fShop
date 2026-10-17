@@ -53,4 +53,17 @@ class ItemCodecTest {
         String text = java.util.Base64.getEncoder().encodeToString(bytes.toByteArray());
         assertTrue(ItemCodec.decode(text).isEmpty());
     }
+
+    @Test
+    void nullDecodesToEmpty() {
+        assertTrue(ItemCodec.decode(null).isEmpty());
+    }
+
+
+    @Test
+    void payloadThatFailsInsideBukkitDecodesToEmpty() throws Exception {
+        byte[] raw = java.util.Base64.getDecoder().decode(ItemCodec.encode(new ItemStack(Material.DIAMOND_SWORD)));
+        raw[142] ^= 0x20; // stream Java válido, mas o Bukkit lança NullPointerException ao reconstruir
+        assertTrue(ItemCodec.decode(java.util.Base64.getEncoder().encodeToString(raw)).isEmpty());
+    }
 }

@@ -26,6 +26,7 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 - Os itens das lojas de jogador (baú) continuam por fazer e vão reutilizar a tabela `fshop_items`.
 - Corrida put-depois-remove: gravar e apagar a mesma chave em seguida correm em threads diferentes do pool e podem trocar de ordem (encadear futuros por chave resolvia).
 - `compileOnly sqlite-jdbc` no `build.gradle.kts` pode já não ser necessário (não removido).
+- Lojas antigas sem registo em `fshop_items` passam a trocar um item simples (`new ItemStack(material)`) com comparação estrita, por isso já não aceitam itens encantados, renomeados ou com data value diferente de 0 (antes comparavam só o Material); para as ter completas o admin tem de recriar a placa e voltar a definir o item.
 - Teste manual no jogo: espada encantada e renomeada definida na placa, comprar dá a espada igual, vender uma espada simples recusa, reiniciar o servidor mantém o item.
 - O `inFlight` pode ficar preso e uma compra pode perder dinheiro se o scheduler recusar uma tarefa enquanto o plugin se desativa.
 - `ShopOffer.fromSign` aceita ids numéricos de item via `matchMaterial` e quantidades como `+5`.

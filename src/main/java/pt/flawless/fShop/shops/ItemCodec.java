@@ -23,12 +23,12 @@ public final class ItemCodec {
         return Base64.getEncoder().encodeToString(bytes.toByteArray());
     }
 
-    /** Vazio se o texto não for Base64 válido ou não contiver um {@link ItemStack}. */
+    /** Vazio se o texto for nulo, não for Base64 válido, não se reconstruir ou não contiver um {@link ItemStack}. */
     public static Optional<ItemStack> decode(String text) {
         try (BukkitObjectInputStream in = new BukkitObjectInputStream(
                 new ByteArrayInputStream(Base64.getDecoder().decode(text)))) {
             return in.readObject() instanceof ItemStack item ? Optional.of(item) : Optional.empty();
-        } catch (IOException | ClassNotFoundException | IllegalArgumentException e) {
+        } catch (Exception e) { // também RuntimeException do Bukkit (material removido, linha editada à mão)
             return Optional.empty();
         }
     }
