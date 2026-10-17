@@ -1,5 +1,6 @@
 package pt.flawless.fShop.listeners;
 
+import pt.flawless.fapi.messages.Messages;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -29,7 +30,7 @@ public class ShopCreateListener implements Listener {
                 e.setCancelled(true);
                 e.getBlock().breakNaturally();
                 FSound.fail(player);
-                player.sendMessage("§cNão tens permissão para criar lojas do servidor.");
+                Messages.noPermission(player);
                 return;
             }
 
