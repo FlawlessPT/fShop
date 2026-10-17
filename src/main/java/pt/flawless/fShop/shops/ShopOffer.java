@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bukkit.Material;
+import pt.flawless.fapi.economy.Amounts;
 
 /** Oferta lida de uma placa de loja. Preços em cêntimos; 0 significa que a loja não faz essa operação. */
 public record ShopOffer(int quantity, Material material, long buyCents, long sellCents) {
@@ -11,9 +12,11 @@ public record ShopOffer(int quantity, Material material, long buyCents, long sel
     // 36 espaços de inventário x 64 itens
     static final int MAX_QUANTITY = 2304;
 
-    private static final Pattern BUY = Pattern.compile("^C\\s+(\\d+)$");
-    private static final Pattern SELL = Pattern.compile("^V\\s+(\\d+)$");
-    private static final Pattern BOTH = Pattern.compile("^C\\s+(\\d+)\\s*/\\s*V\\s+(\\d+)$");
+    // preço: inteiro em euros, ou com sufixo k/M/B (decimais permitidos: 1,5k)
+    private static final String PRICE = "([0-9]+(?:[.,][0-9]+)?[kKmMbB]|[0-9]+)";
+    private static final Pattern BUY = Pattern.compile("^C\\s+" + PRICE + "$");
+    private static final Pattern SELL = Pattern.compile("^V\\s+" + PRICE + "$");
+    private static final Pattern BOTH = Pattern.compile("^C\\s+" + PRICE + "\\s*/\\s*V\\s+" + PRICE + "$");
 
     public boolean canBuy() {
         return buyCents > 0;
@@ -63,7 +66,7 @@ public record ShopOffer(int quantity, Material material, long buyCents, long sel
             } else {
                 return Optional.empty();
             }
-        } catch (NumberFormatException | ArithmeticException e) {
+        } catch (NumberFormatException e) {
             return Optional.empty();
         }
         if (buy <= 0 && sell <= 0) {
@@ -72,8 +75,8 @@ public record ShopOffer(int quantity, Material material, long buyCents, long sel
         return Optional.of(new ShopOffer(quantity, material, buy, sell));
     }
 
-    private static long cents(String euros) {
-        return Math.multiplyExact(Long.parseLong(euros), 100L);
+    private static long cents(String price) {
+        return Amounts.parse(price).orElseThrow(NumberFormatException::new);
     }
 
     private static String strip(String line) {

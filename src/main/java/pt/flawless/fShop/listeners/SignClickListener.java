@@ -86,11 +86,11 @@ public class SignClickListener implements Listener {
         switch (result) {
             case BOUGHT -> {
                 FSound.success(player);
-                player.sendMessage("§aCompraste §7" + what + " §apor §7" + trade.format(offer.buyCents()) + "§a.");
+                withBalance(player, "§aCompraste §7" + what + " §apor §7" + trade.format(offer.buyCents()) + "§a.");
             }
             case SOLD -> {
                 FSound.success(player);
-                player.sendMessage("§aVendeste §7" + what + " §apor §7" + trade.format(offer.sellCents()) + "§a.");
+                withBalance(player, "§aVendeste §7" + what + " §apor §7" + trade.format(offer.sellCents()) + "§a.");
             }
             case NOT_AVAILABLE -> fail(player, buying
                     ? "§cEsta loja não vende este item."
@@ -102,6 +102,12 @@ public class SignClickListener implements Listener {
             case BUSY -> player.sendMessage("§cAguarda que a transação anterior termine.");
             case ERROR -> fail(player, "§cErro ao processar a transação. Tenta mais tarde.");
         }
+    }
+
+    /** Envia a mensagem com o saldo atual no fim; sem saldo (erro), envia só a mensagem. */
+    private void withBalance(Player player, String message) {
+        trade.balance(player.getUniqueId()).whenComplete((balance, error) -> player.sendMessage(
+                error == null ? message + " Novo saldo: §7" + trade.format(balance) : message));
     }
 
     private void fail(Player player, String message) {

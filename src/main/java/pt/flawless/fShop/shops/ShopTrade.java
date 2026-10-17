@@ -49,6 +49,12 @@ public final class ShopTrade {
         return economy.format(cents);
     }
 
+    /** Saldo atual, entregue na thread principal; falha se a economia falhar. */
+    public CompletableFuture<Long> balance(UUID player) {
+        return economy.getBalance(player).whenCompleteAsync((balance, error) -> {
+        }, mainThread);
+    }
+
     public CompletableFuture<Result> buy(UUID player, ShopOffer offer, Bag bag) {
         if (!offer.canBuy()) {
             return done(Result.NOT_AVAILABLE);

@@ -38,6 +38,15 @@ class ShopOfferTest {
     }
 
     @Test
+    void pricesWithSuffixes() {
+        ShopOffer offer = ShopOffer.fromSign("1", "C 1k / V 1,5k", "Diamond").orElseThrow();
+        assertEquals(100000, offer.buyCents());
+        assertEquals(150000, offer.sellCents());
+        assertEquals(200_000_000, ShopOffer.fromSign("1", "C 2M", "Diamond").orElseThrow().buyCents());
+        assertEquals(Optional.empty(), ShopOffer.fromSign("1", "C 1,5", "Diamond"));
+    }
+
+    @Test
     void itemNameWithSpacesMatchesMaterial() {
         ShopOffer offer = ShopOffer.fromSign("1", "C 50", "Diamond Sword").orElseThrow();
         assertEquals(Material.DIAMOND_SWORD, offer.material());
