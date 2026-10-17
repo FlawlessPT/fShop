@@ -4,7 +4,6 @@ import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.SignChangeEvent;
 import pt.flawless.fShop.enums.ShopType;
-import pt.flawless.fapi.logs.FConsoleLogger;
 
 public class SignShopManager {
     private final Player player;
@@ -79,17 +78,11 @@ public class SignShopManager {
             String title = removeColorCodes(this.sign.getLine(0));
             String shopTypeAndPrice = removeColorCodes(this.sign.getLine(2));
 
-            System.out.println(title + shopTypeAndPrice);
-            FConsoleLogger.sendConsoleMessage(title + shopTypeAndPrice);
-
             return title.equalsIgnoreCase("loja") || matchShopTypePattern(shopTypeAndPrice);
         }
 
         String title = this.creatableSign.getLine(0);
         String shopTypeAndPrice = this.creatableSign.getLine(2);
-
-        System.out.println(title + shopTypeAndPrice);
-        FConsoleLogger.sendConsoleMessage(title + shopTypeAndPrice);
 
         return title.equalsIgnoreCase("loja") || matchShopTypePattern(shopTypeAndPrice);
     }

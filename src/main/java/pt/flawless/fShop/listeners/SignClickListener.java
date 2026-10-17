@@ -5,6 +5,7 @@ import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import pt.flawless.fShop.shops.SignShop;
 import pt.flawless.fShop.shops.SignShopImpl;
@@ -20,19 +21,20 @@ public class SignClickListener implements Listener {
 
         Block block = e.getClickedBlock();
 
-        if (block.getState() instanceof Sign) {
-            SignShopImpl signShop = new SignShopImpl(new SignShop((Sign) block.getState(), player));
+        if (block == null || !(block.getState() instanceof Sign sign)) return;
 
-            try {
-                if (signShop.isSignShop()) {
+        SignShopImpl signShop = new SignShopImpl(new SignShop(sign, player));
+
+        try {
+            if (signShop.isSignShop()) {
+                if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
                     signShop.insertItemInHand(player.getItemInHand());
-                    e.setCancelled(true);
                 }
-            } catch (Exception exception) {
-                FConsoleLogger.sendConsoleMessage(exception.getMessage());
                 e.setCancelled(true);
             }
+        } catch (Exception exception) {
+            FConsoleLogger.sendConsoleMessage(String.valueOf(exception));
+            e.setCancelled(true);
         }
     }
 }
-

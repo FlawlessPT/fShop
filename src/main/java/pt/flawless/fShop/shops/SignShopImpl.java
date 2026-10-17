@@ -19,43 +19,14 @@ public class SignShopImpl {
     }
 
     public void createPlayerShop() {
-        SignChangeEvent sign = signShop.getCreatableSign();
-        Player player = signShop.getPlayer();
-
-        SignShopManager signShopManager = new SignShopManager(sign, player);
-
-        String quantity = sign.getLine(1);
-        String signShopType = sign.getLine(2);
-        String price = sign.getLine(3);
-
-        if (quantity.isEmpty() || signShopType.isEmpty() || price.isEmpty()) {
-            sign.getBlock().breakNaturally();
-            FSound.fail(player);
-            player.sendMessage("§cErro ao criar loja. Argumentos em falta.");
-
-            return;
-        }
-
-        try {
-            signShopManager.setTitle(ShopType.PlayerShop);
-            signShopManager.setQuantity(quantity);
-            signShopManager.setSignShopType(signShopType, price);
-            sign.setLine(3, "---");
-
-            sign.getBlock().getState().update();
-
-            FSound.success(player);
-            player.sendMessage("§eLoja criada com sucesso.");
-        } catch (Exception e1) {
-            sign.getBlock().breakNaturally();
-            FSound.fail(player);
-            FConsoleLogger.sendConsoleMessage(e1.toString(), EMessageTypeEnum.ERROR);
-            player.sendMessage("§cErro ao criar loja.");
-        }
-
+        createShop(ShopType.PlayerShop);
     }
 
     public void createServerShop() {
+        createShop(ShopType.ServerShop);
+    }
+
+    private void createShop(ShopType shopType) {
         SignChangeEvent sign = signShop.getCreatableSign();
         Player player = signShop.getPlayer();
 
@@ -64,8 +35,6 @@ public class SignShopImpl {
         String quantity = sign.getLine(1);
         String signShopType = sign.getLine(2);
         String price = sign.getLine(3);
-
-        player.sendMessage("teste");
 
         if (quantity.isEmpty() || signShopType.isEmpty() || price.isEmpty()) {
             sign.getBlock().breakNaturally();
@@ -76,7 +45,7 @@ public class SignShopImpl {
         }
 
         try {
-            signShopManager.setTitle(ShopType.ServerShop);
+            signShopManager.setTitle(shopType);
             signShopManager.setQuantity(quantity);
             signShopManager.setSignShopType(signShopType, price);
             sign.setLine(3, "---");
