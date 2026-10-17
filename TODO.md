@@ -3,7 +3,7 @@
 Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 
 ## Funcionalidades
-- [ ] Ligar as lojas à economia (fEconomy). Depende de expor o `EconomyService` a outros plugins (ver o `TODO.md` do fEconomy) e de chamar `ensureAccount` antes de depositar.
+- [x] Ligar as lojas à economia (fEconomy) via `EconomyApi` do fAPI.
 - [ ] Guardar as lojas: não encontrei persistência das lojas no código; usar o `DatabaseService` partilhado (`Databases.get()` + migração).
 
 ## Código
@@ -12,7 +12,7 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 - [ ] `SignShopManager`: mover a lógica marcada para o fAPI (comentário `TODO` no código).
 
 ## Qualidade
-- [ ] O fShop não tem testes automáticos.
+- [x] Testes automáticos (`ShopOffer`, `ShopTrade`, `SignShopManager`).
 
 ## Depois da integração com a economia
 - Lojas de jogador: baú de stock ligado à placa, `transfer` para o dono, persistência (tabela `fshop_shops` com localização, dono por UUID, item com data value, quantidade e preços) e reconhecimento depois de reiniciar.
@@ -27,3 +27,6 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 - `SignShopManager` (linhas ~104/110) compara o título com `equalsIgnoreCase("loja")` sem normalizar cores (só deteção, não a verificação de permissão).
 - `ShopCreateListener` compara o título do dono sem normalizar cores.
 - Uma exceção síncrona em `ShopTrade.sell` perde os itens retirados (improvável: o `EconomyApi` devolve futuros).
+- Nada obriga a venda <= compra na criação de uma loja do servidor: `C 5 / V 10` permite um ciclo de dinheiro infinito (só admins). Validar em `SignShopImpl.createShop`.
+- Se o jogador sair entre o `withdraw` e a entrega na thread principal, o `give` vai para um `Player` offline e os itens perdem-se. Verificar `isOnline()` e reembolsar.
+- Teste manual no jogo: clicar numa placa de loja antes do `/login` não faz nada; admins têm de agachar-se (sneak) para partir uma placa de loja, porque o clique esquerdo é cancelado.

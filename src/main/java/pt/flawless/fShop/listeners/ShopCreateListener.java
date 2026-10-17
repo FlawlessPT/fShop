@@ -10,7 +10,7 @@ import pt.flawless.fShop.shops.SignShopImpl;
 import pt.flawless.fapi.sounds.FSound;
 
 public class ShopCreateListener implements Listener {
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onShopCreate(SignChangeEvent e) {
         Player player = e.getPlayer();
         String title = e.getLine(0);
