@@ -6,6 +6,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.SignChangeEvent;
 import pt.flawless.fShop.shops.SignShop;
 import pt.flawless.fShop.shops.SignShopImpl;
+import pt.flawless.fapi.sounds.FSound;
 
 public class ShopCreateListener implements Listener {
     @EventHandler
@@ -14,6 +15,13 @@ public class ShopCreateListener implements Listener {
         String title = e.getLine(0);
 
         if (title.equalsIgnoreCase("Loja")) {
+            if (!player.hasPermission("fshop.admin")) {
+                e.getBlock().breakNaturally();
+                FSound.fail(player);
+                player.sendMessage("§cNão tens permissão para criar lojas do servidor.");
+                return;
+            }
+
             SignShopImpl signShopImpl = new SignShopImpl(new SignShop(e, player));
 
             signShopImpl.createServerShop();

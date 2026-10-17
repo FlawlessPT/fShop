@@ -1,5 +1,6 @@
 package pt.flawless.fShop.shops;
 
+import java.util.Optional;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -72,6 +73,22 @@ public class SignShopImpl {
 
         String formattedItemName = WordUtils.capitalizeFully(itemName.replace("_", " "));
         signShopManager.setItemName(formattedItemName);
+    }
+
+    public boolean isServerShop() {
+        return new SignShopManager(signShop.getSign(), signShop.getPlayer()).isServerShop();
+    }
+
+    public boolean canEdit() {
+        return new SignShopManager(signShop.getSign(), signShop.getPlayer()).canEdit();
+    }
+
+    public boolean hasItem() {
+        return new SignShopManager(signShop.getSign(), signShop.getPlayer()).withItemInShop();
+    }
+
+    public Optional<ShopOffer> offer() {
+        return new SignShopManager(signShop.getSign(), signShop.getPlayer()).offer();
     }
 
     public boolean isSignShop() {

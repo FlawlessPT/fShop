@@ -1,9 +1,11 @@
 package pt.flawless.fShop.managers;
 
+import java.util.Optional;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.SignChangeEvent;
 import pt.flawless.fShop.enums.ShopType;
+import pt.flawless.fShop.shops.ShopOffer;
 
 public class SignShopManager {
     private final Player player;
@@ -71,6 +73,22 @@ public class SignShopManager {
         if (this.sign != null) return !this.sign.getLine(3).equalsIgnoreCase("---");
 
         return !this.creatableSign.getLine(3).equalsIgnoreCase("---");
+    }
+
+    public boolean isServerShop() {
+        return removeColorCodes(this.sign.getLine(0)).equalsIgnoreCase("loja");
+    }
+
+    /** Loja do servidor: só quem tem {@code fshop.admin}. Loja de jogador: só o dono (nome na linha 1). */
+    public boolean canEdit() {
+        if (isServerShop()) {
+            return this.player.hasPermission("fshop.admin");
+        }
+        return removeColorCodes(this.sign.getLine(0)).equalsIgnoreCase(this.player.getName());
+    }
+
+    public Optional<ShopOffer> offer() {
+        return ShopOffer.fromSign(this.sign.getLine(1), this.sign.getLine(2), this.sign.getLine(3));
     }
 
     public boolean isShop() {
