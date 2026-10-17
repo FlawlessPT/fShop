@@ -7,6 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import pt.flawless.fShop.listeners.ShopBreakListener;
 import pt.flawless.fShop.listeners.ShopCreateListener;
 import pt.flawless.fShop.listeners.SignClickListener;
+import pt.flawless.fShop.shops.ShopActions;
 import pt.flawless.fShop.shops.ShopItems;
 import pt.flawless.fShop.shops.ShopTrade;
 import pt.flawless.fShop.shops.SqlShopItemRepository;
@@ -53,7 +54,8 @@ public class FShop extends JavaPlugin {
                 this::runOnMainThread,
                 error -> consoleLogger.sendMessage(String.valueOf(error), EMessageTypeEnum.ERROR));
 
-        Bukkit.getPluginManager().registerEvents(new SignClickListener(trade, items), this);
+        ShopActions actions = new ShopActions(trade);
+        Bukkit.getPluginManager().registerEvents(new SignClickListener(actions, items), this);
         Bukkit.getPluginManager().registerEvents(new ShopCreateListener(items), this);
         Bukkit.getPluginManager().registerEvents(new ShopBreakListener(items), this);
 

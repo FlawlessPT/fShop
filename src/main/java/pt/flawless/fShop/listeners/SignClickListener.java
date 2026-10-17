@@ -1,7 +1,6 @@
 package pt.flawless.fShop.listeners;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
@@ -11,11 +10,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import pt.flawless.fShop.shops.PlayerBag;
+import pt.flawless.fShop.shops.ShopActions;
 import pt.flawless.fShop.shops.ShopItems;
 import pt.flawless.fShop.shops.ShopKey;
+import pt.flawless.fShop.shops.ShopLookup;
 import pt.flawless.fShop.shops.ShopOffer;
-import pt.flawless.fShop.shops.ShopTrade;
 import pt.flawless.fShop.shops.SignShop;
 import pt.flawless.fShop.shops.SignShopImpl;
 import pt.flawless.fapi.enums.EMessageTypeEnum;
@@ -23,12 +22,12 @@ import pt.flawless.fapi.logs.FConsoleLogger;
 import pt.flawless.fapi.sounds.FSound;
 
 public class SignClickListener implements Listener {
-    private final ShopTrade trade;
+    private final ShopActions actions;
 
     private final ShopItems items;
 
-    public SignClickListener(ShopTrade trade, ShopItems items) {
-        this.trade = trade;
+    public SignClickListener(ShopActions actions, ShopItems items) {
+        this.actions = actions;
         this.items = items;
     }
 
@@ -76,54 +75,11 @@ public class SignClickListener implements Listener {
 
             boolean buying = action == Action.RIGHT_CLICK_BLOCK;
             ShopOffer shopOffer = offer.get();
-            ItemStack item = items.get(ShopKey.of(block))
-                    .filter(stored -> stored.getType() == shopOffer.material())
-                    .orElseGet(() -> new ItemStack(shopOffer.material()));
-            PlayerBag bag = new PlayerBag(player);
-            CompletableFuture<ShopTrade.Result> result = buying
-                    ? trade.buy(player.getUniqueId(), shopOffer, item, bag)
-                    : trade.sell(player.getUniqueId(), shopOffer, item, bag);
-            result.thenAccept(r -> report(player, shopOffer, r, buying)).exceptionally(error -> {
-                FConsoleLogger.sendConsoleMessage(String.valueOf(error), EMessageTypeEnum.ERROR);
-                return null;
-            });
+            ItemStack item = ShopLookup.itemFor(items, ShopKey.of(block), shopOffer);
+            actions.execute(player, shopOffer, item, buying);
         } catch (Exception exception) {
             FConsoleLogger.sendConsoleMessage(String.valueOf(exception), EMessageTypeEnum.ERROR);
             e.setCancelled(true);
         }
-    }
-
-    private void report(Player player, ShopOffer offer, ShopTrade.Result result, boolean buying) {
-        String what = offer.quantity() + "x " + offer.itemName();
-        switch (result) {
-            case BOUGHT -> {
-                FSound.success(player);
-                withBalance(player, "§aCompraste §7" + what + " §apor §7" + trade.format(offer.buyCents()) + "§a.");
-            }
-            case SOLD -> {
-                FSound.success(player);
-                withBalance(player, "§aVendeste §7" + what + " §apor §7" + trade.format(offer.sellCents()) + "§a.");
-            }
-            case NOT_AVAILABLE -> fail(player, buying
-                    ? "§cEsta loja não vende este item."
-                    : "§cEsta loja não compra este item.");
-            case NO_SPACE -> fail(player, "§cNão tens espaço no inventário.");
-            case NOT_ENOUGH_ITEMS -> fail(player, "§cNão tens itens suficientes para vender.");
-            case INSUFFICIENT_FUNDS -> fail(player, "§cNão tens dinheiro suficiente.");
-            case NO_ACCOUNT -> fail(player, "§cA tua conta de economia não existe. Volta a entrar no servidor.");
-            case BUSY -> player.sendMessage("§cAguarda que a transação anterior termine.");
-            case ERROR -> fail(player, "§cErro ao processar a transação. Tenta mais tarde.");
-        }
-    }
-
-    /** Envia a mensagem com o saldo atual no fim; sem saldo (erro), envia só a mensagem. */
-    private void withBalance(Player player, String message) {
-        trade.balance(player.getUniqueId()).whenComplete((balance, error) -> player.sendMessage(
-                error == null ? message + " Novo saldo: §7" + trade.format(balance) : message));
-    }
-
-    private void fail(Player player, String message) {
-        FSound.fail(player);
-        player.sendMessage(message);
     }
 }
