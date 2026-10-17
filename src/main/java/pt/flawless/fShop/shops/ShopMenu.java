@@ -1,0 +1,102 @@
+package pt.flawless.fShop.shops;
+
+import java.util.List;
+import java.util.function.LongFunction;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+/**
+ * Menu da loja: baú de 27 espaços com o item exato ao centro, o botão de compra à esquerda e o de venda à direita.
+ * O holder identifica o menu (não se usa o título) e guarda a posição da placa.
+ */
+public final class ShopMenu implements InventoryHolder {
+
+    public static final int SIZE = 27;
+    public static final int BUY_SLOT = 11;
+    public static final int ITEM_SLOT = 13;
+    public static final int SELL_SLOT = 15;
+
+    public enum Action { BUY, SELL, NONE }
+
+    private static final short GREEN = 5;
+    private static final short GRAY = 7;
+    private static final short RED = 14;
+    private static final short BLACK = 15;
+
+    private final ShopKey key;
+    private Inventory inventory;
+
+    private ShopMenu(ShopKey key) {
+        this.key = key;
+    }
+
+    public ShopKey key() {
+        return key;
+    }
+
+    /** O bloco da placa; {@code null} se o mundo já não existir. */
+    public Block block() {
+        World world = Bukkit.getWorld(key.world());
+        return world == null ? null : world.getBlockAt(key.x(), key.y(), key.z());
+    }
+
+    @Override
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    /** Só os dois botões fazem alguma coisa; slots do inventário de baixo (>= SIZE) e negativos são {@link Action#NONE}. */
+    public static Action actionFor(int rawSlot) {
+        return switch (rawSlot) {
+            case BUY_SLOT -> Action.BUY;
+            case SELL_SLOT -> Action.SELL;
+            default -> Action.NONE;
+        };
+    }
+
+    static List<String> buyLore(ShopOffer offer, String price) {
+        return List.of("§7" + offer.quantity() + "x " + offer.itemName(), "§7Preço: §f" + price);
+    }
+
+    static List<String> sellLore(ShopOffer offer, String price) {
+        return List.of("§7" + offer.quantity() + "x " + offer.itemName(), "§7Recebes: §f" + price);
+    }
+
+    public static Inventory create(ShopKey key, ShopOffer offer, ItemStack item, LongFunction<String> format) {
+        ShopMenu holder = new ShopMenu(key);
+        Inventory inventory = Bukkit.createInventory(holder, SIZE, "Loja");
+        holder.inventory = inventory;
+
+        ItemStack filler = pane(BLACK, " ", List.of());
+        for (int slot = 0; slot < SIZE; slot++) {
+            inventory.setItem(slot, filler.clone());
+        }
+
+        ItemStack shown = item.clone();
+        shown.setAmount(Math.min(offer.quantity(), shown.getMaxStackSize()));
+        inventory.setItem(ITEM_SLOT, shown);
+
+        inventory.setItem(BUY_SLOT, offer.canBuy()
+                ? pane(GREEN, "§aComprar", buyLore(offer, format.apply(offer.buyCents())))
+                : pane(GRAY, "§7Indisponível", List.of("§7Esta loja não vende este item.")));
+        inventory.setItem(SELL_SLOT, offer.canSell()
+                ? pane(RED, "§cVender", sellLore(offer, format.apply(offer.sellCents())))
+                : pane(GRAY, "§7Indisponível", List.of("§7Esta loja não compra este item.")));
+        return inventory;
+    }
+
+    private static ItemStack pane(short color, String name, List<String> lore) {
+        ItemStack stack = new ItemStack(Material.STAINED_GLASS_PANE, 1, color);
+        ItemMeta meta = stack.getItemMeta();
+        meta.setDisplayName(name);
+        meta.setLore(lore);
+        stack.setItemMeta(meta);
+        return stack;
+    }
+}
