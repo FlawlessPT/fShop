@@ -1,6 +1,7 @@
 package pt.flawless.fShop.listeners;
 
 import java.util.Optional;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
@@ -14,6 +15,7 @@ import pt.flawless.fShop.shops.ShopActions;
 import pt.flawless.fShop.shops.ShopItems;
 import pt.flawless.fShop.shops.ShopKey;
 import pt.flawless.fShop.shops.ShopLookup;
+import pt.flawless.fShop.shops.ShopMenu;
 import pt.flawless.fShop.shops.ShopOffer;
 import pt.flawless.fShop.shops.SignShop;
 import pt.flawless.fShop.shops.SignShopImpl;
@@ -37,13 +39,26 @@ public class SignClickListener implements Listener {
         if (action != Action.RIGHT_CLICK_BLOCK && action != Action.LEFT_CLICK_BLOCK) return;
 
         Player player = e.getPlayer();
-
-        // A SignShop can only be destroyed while sneaking
-        if (player.isSneaking()) return;
-
         Block block = e.getClickedBlock();
+        if (block == null) return;
 
-        if (block == null || !(block.getState() instanceof Sign sign)) return;
+        Material type = block.getType();
+        if (type != Material.SIGN_POST && type != Material.WALL_SIGN) return;
+
+        // Agachado: botão direito abre o menu da loja; botão esquerdo deixa partir a placa
+        if (player.isSneaking()) {
+            if (action == Action.RIGHT_CLICK_BLOCK) {
+                Optional<ShopLookup.Ready> ready = ShopLookup.ready(block, player, items);
+                if (ready.isPresent()) {
+                    e.setCancelled(true);
+                    player.openInventory(ShopMenu.create(
+                            ShopKey.of(block), ready.get().offer(), ready.get().item(), actions::format));
+                }
+            }
+            return;
+        }
+
+        if (!(block.getState() instanceof Sign sign)) return;
 
         SignShopImpl signShop = new SignShopImpl(new SignShop(sign, player));
 
