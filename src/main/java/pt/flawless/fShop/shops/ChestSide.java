@@ -55,6 +55,11 @@ public final class ChestSide implements ShopSide {
     }
 
     @Override
+    public CompletableFuture<Boolean> canPay(long cents) {
+        return economy.getBalance(owner).thenApply(balance -> balance >= cents);
+    }
+
+    @Override
     public CompletableFuture<?> pay(UUID player, long cents) {
         return economy.transfer(owner, player, cents);
     }

@@ -44,6 +44,11 @@ public final class ServerSide implements ShopSide {
     }
 
     @Override
+    public CompletableFuture<Boolean> canPay(long cents) {
+        return CompletableFuture.completedFuture(true);
+    }
+
+    @Override
     public CompletableFuture<?> pay(UUID player, long cents) {
         return economy.deposit(player, cents);
     }

@@ -29,6 +29,9 @@ public interface ShopSide {
     /** O comprador paga à loja. */
     CompletableFuture<?> collect(UUID buyer, long cents);
 
+    /** A loja consegue pagar {@code cents} a um jogador? */
+    CompletableFuture<Boolean> canPay(long cents);
+
     /** A loja paga a um jogador (venda ou reembolso). */
     CompletableFuture<?> pay(UUID player, long cents);
 }

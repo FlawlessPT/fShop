@@ -44,10 +44,12 @@ class ShopTradeTest {
         CompletableFuture<Long> withdrawResult = CompletableFuture.completedFuture(0L);
         CompletableFuture<Long> depositResult = CompletableFuture.completedFuture(0L);
         CompletableFuture<Long> transferResult = CompletableFuture.completedFuture(0L);
+        CompletableFuture<Long> balanceResult;
+        long balance = 1_000_000;
 
         @Override
         public CompletableFuture<Long> getBalance(UUID uuid) {
-            return CompletableFuture.completedFuture(0L);
+            return balanceResult != null ? balanceResult : CompletableFuture.completedFuture(balance);
         }
 
         @Override
@@ -359,5 +361,38 @@ class ShopTradeTest {
         economy.transferResult = CompletableFuture.failedFuture(new InsufficientFundsException(PLAYER, 0, 1000));
         assertEquals(INSUFFICIENT_FUNDS, trade.buy(PLAYER, OFFER, ITEM, bag, chestSide).join());
         assertEquals(1, errors.size());
+    }
+
+    @Test
+    void chestSell_whenTheOwnerCannotAfford_failsBeforeMovingAnything() {
+        bag.items = 20;
+        economy.balance = 100;
+        assertEquals(OWNER_NO_FUNDS, trade.sell(PLAYER, OFFER, ITEM, bag, chestSide).join());
+        assertEquals(20, bag.items);
+        assertEquals(0, chest.items);
+        assertTrue(economy.calls.stream().noneMatch(c -> c.startsWith("transfer")));
+    }
+
+    @Test
+    void chestSell_whenTheBalanceCheckFails_isReportedAndNothingMoves() {
+        bag.items = 20;
+        economy.balanceResult = CompletableFuture.failedFuture(new IllegalStateException("db em baixo"));
+        assertEquals(ERROR, trade.sell(PLAYER, OFFER, ITEM, bag, chestSide).join());
+        assertEquals(1, errors.size());
+        assertEquals(20, bag.items);
+        assertEquals(0, chest.items);
+    }
+
+    @Test
+    void chestSell_whenTheChestIsDrainedWhilePaymentFails_logsAndReturnsTheItems() {
+        bag.items = 20;
+        economy.transferResult = new CompletableFuture<>();
+        CompletableFuture<ShopTrade.Result> sale = trade.sell(PLAYER, OFFER, ITEM, bag, chestSide);
+        assertFalse(sale.isDone());
+        chest.items = 0;
+        economy.transferResult.completeExceptionally(new InsufficientFundsException(OWNER, 0, 500));
+        assertEquals(OWNER_NO_FUNDS, sale.join());
+        assertEquals(1, errors.size());
+        assertEquals(20, bag.items);
     }
 }

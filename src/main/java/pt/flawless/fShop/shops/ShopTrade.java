@@ -106,19 +106,34 @@ public final class ShopTrade {
             if (!side.canStore(item, offer.quantity())) {
                 return done(Result.SHOP_FULL);
             }
-            bag.take(item, offer.quantity());
-            side.putStock(item, offer.quantity());
-            return side.pay(player, offer.sellCents()).handleAsync((paid, error) -> {
-                if (error == null) {
-                    return Result.SOLD;
+            // Antes de mexer em itens: se o dono não pode pagar, a reversão nunca é necessária por esse motivo.
+            return side.canPay(offer.sellCents()).handleAsync((canPay, balanceError) -> {
+                if (balanceError != null) {
+                    return done(failure(balanceError, Result.OWNER_NO_FUNDS));
                 }
-                if (!side.takeStock(item, offer.quantity())) {
-                    onError.accept(new IllegalStateException("o stock da loja mudou ao reverter uma venda: jogador "
-                            + player + ", " + offer.quantity() + " itens"));
+                if (!canPay) {
+                    return done(Result.OWNER_NO_FUNDS);
                 }
-                bag.give(item, offer.quantity());
-                return failure(error, Result.OWNER_NO_FUNDS);
-            }, mainThread);
+                if (!bag.has(item, offer.quantity())) {
+                    return done(Result.NOT_ENOUGH_ITEMS);
+                }
+                if (!side.canStore(item, offer.quantity())) {
+                    return done(Result.SHOP_FULL);
+                }
+                bag.take(item, offer.quantity());
+                side.putStock(item, offer.quantity());
+                return side.pay(player, offer.sellCents()).handleAsync((paid, error) -> {
+                    if (error == null) {
+                        return Result.SOLD;
+                    }
+                    if (!side.takeStock(item, offer.quantity())) {
+                        onError.accept(new IllegalStateException("o stock da loja mudou ao reverter uma venda: "
+                                + "jogador " + player + ", " + offer.quantity() + " itens"));
+                    }
+                    bag.give(item, offer.quantity());
+                    return failure(error, Result.OWNER_NO_FUNDS);
+                }, mainThread);
+            }, mainThread).thenCompose(r -> r);
         });
     }
 
