@@ -31,25 +31,29 @@ public final class TestDb {
                 System.getenv("FLAWLESS_DB_PASSWORD"));
     }
 
-    /** Apaga só fshop_items (nunca schema_version) e recria-a com o ficheiro V001. */
+    /** Apaga só fshop_items e fshop_shops (nunca schema_version) e recria-as com os ficheiros V001 e V002. */
     public static void resetSchema(DatabaseService database) throws Exception {
-        String ddl = readMigration().trim();
-        if (ddl.endsWith(";")) {
-            ddl = ddl.substring(0, ddl.length() - 1);
-        }
-        String create = ddl;
+        String items = withoutTrailingSemicolon(readMigration("/db/fshop/V001__create_shop_items.sql"));
+        String shops = withoutTrailingSemicolon(readMigration("/db/fshop/V002__create_shops.sql"));
         database.runAsync(connection -> {
             try (Statement st = connection.createStatement()) {
                 st.execute("DROP TABLE IF EXISTS fshop_items");
-                st.execute(create);
+                st.execute("DROP TABLE IF EXISTS fshop_shops");
+                st.execute(items);
+                st.execute(shops);
             }
         }).get(30, TimeUnit.SECONDS);
     }
 
-    private static String readMigration() {
-        try (InputStream in = TestDb.class.getResourceAsStream("/db/fshop/V001__create_shop_items.sql")) {
+    private static String withoutTrailingSemicolon(String ddl) {
+        String trimmed = ddl.trim();
+        return trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
+    }
+
+    private static String readMigration(String path) {
+        try (InputStream in = TestDb.class.getResourceAsStream(path)) {
             if (in == null) {
-                throw new IllegalStateException("V001 não encontrado no classpath");
+                throw new IllegalStateException(path + " não encontrado no classpath");
             }
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
