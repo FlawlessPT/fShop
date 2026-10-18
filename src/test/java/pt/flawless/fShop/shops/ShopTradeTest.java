@@ -85,19 +85,21 @@ class ShopTradeTest {
         boolean canHoldFirst = true;
         boolean canHoldLater = true;
         boolean failGive;
+        boolean online = true;
         ItemStack lastItem;
         private int canHoldCalls;
 
         @Override
         public boolean canHold(ItemStack item, int quantity) {
             lastItem = item;
-            return canHoldCalls++ == 0 ? canHoldFirst : canHoldLater;
+            boolean ok = canHoldCalls++ == 0 ? canHoldFirst : canHoldLater;
+            return online && ok;
         }
 
         @Override
         public boolean has(ItemStack item, int quantity) {
             lastItem = item;
-            return items >= quantity;
+            return online && items >= quantity;
         }
 
         @Override
@@ -384,15 +386,59 @@ class ShopTradeTest {
     }
 
     @Test
-    void chestSell_whenTheChestIsDrainedWhilePaymentFails_logsAndReturnsTheItems() {
+    void chestSell_whenPaymentFails_returnsTheItemsAndLeavesTheChestUntouched() {
         bag.items = 20;
+        chest.items = 3;
         economy.transferResult = new CompletableFuture<>();
         CompletableFuture<ShopTrade.Result> sale = trade.sell(PLAYER, OFFER, ITEM, bag, chestSide);
         assertFalse(sale.isDone());
+        assertEquals(4, bag.items);
+        assertEquals(3, chest.items);
         chest.items = 0;
         economy.transferResult.completeExceptionally(new InsufficientFundsException(OWNER, 0, 500));
         assertEquals(OWNER_NO_FUNDS, sale.join());
-        assertEquals(1, errors.size());
+        assertTrue(errors.isEmpty());
         assertEquals(20, bag.items);
+        assertEquals(0, chest.items);
+    }
+
+    @Test
+    void chestSell_whenTheChestFillsDuringPayment_logsAndStillSells() {
+        bag.items = 20;
+        economy.transferResult = new CompletableFuture<>();
+        CompletableFuture<ShopTrade.Result> sale = trade.sell(PLAYER, OFFER, ITEM, bag, chestSide);
+        chest.failGive = true;
+        economy.transferResult.complete(0L);
+        assertEquals(SOLD, sale.join());
+        assertEquals(1, errors.size());
+        assertEquals(4, bag.items);
+    }
+
+    @Test
+    void sell_whenThePlayerGoesOfflineBeforeTheBalanceCheck_takesNothing() {
+        bag.items = 20;
+        economy.balanceResult = new CompletableFuture<>();
+        CompletableFuture<ShopTrade.Result> sale = trade.sell(PLAYER, OFFER, ITEM, bag, chestSide);
+        assertFalse(sale.isDone());
+        bag.online = false;
+        economy.balanceResult.complete(1_000_000L);
+        assertEquals(NOT_ENOUGH_ITEMS, sale.join());
+        assertEquals(20, bag.items);
+        assertEquals(0, chest.items);
+        assertTrue(economy.calls.isEmpty());
+    }
+
+    @Test
+    void buy_whenThePlayerGoesOfflineDuringPayment_refundsAndRestocks() {
+        chest.items = 20;
+        economy.transferResult = new CompletableFuture<>();
+        CompletableFuture<ShopTrade.Result> purchase = trade.buy(PLAYER, OFFER, ITEM, bag, chestSide);
+        assertFalse(purchase.isDone());
+        bag.online = false;
+        economy.transferResult.complete(0L);
+        assertEquals(NO_SPACE, purchase.join());
+        assertEquals(20, chest.items);
+        assertEquals(0, bag.items);
+        assertEquals(List.of("transfer P>O 1000", "transfer O>P 1000"), economy.calls);
     }
 }

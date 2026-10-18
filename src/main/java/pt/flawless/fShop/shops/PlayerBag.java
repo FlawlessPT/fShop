@@ -16,6 +16,17 @@ public final class PlayerBag extends InventoryBag {
         this.player = player;
     }
 
+    // Offline: o inventário em memória já não é o que fica gravado; as verificações depois dos saltos assíncronos abortam.
+    @Override
+    public boolean has(ItemStack item, int quantity) {
+        return player.isOnline() && super.has(item, quantity);
+    }
+
+    @Override
+    public boolean canHold(ItemStack item, int quantity) {
+        return player.isOnline() && super.canHold(item, quantity);
+    }
+
     @Override
     protected void leftovers(Collection<ItemStack> items) {
         items.forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));

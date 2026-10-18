@@ -115,18 +115,20 @@ public final class ShopTrade {
                 if (!side.canStore(item, offer.quantity())) {
                     return done(Result.SHOP_FULL);
                 }
+                // Depósito: os itens ficam retidos pela troca e só vão para o baú depois de o pagamento ter sucesso.
                 bag.take(item, offer.quantity());
-                side.putStock(item, offer.quantity());
                 return side.pay(player, offer.sellCents()).handleAsync((paid, error) -> {
-                    if (error == null) {
-                        return Result.SOLD;
+                    if (error != null) {
+                        bag.give(item, offer.quantity());
+                        return failure(error, Result.OWNER_NO_FUNDS);
                     }
-                    if (!side.takeStock(item, offer.quantity())) {
-                        onError.accept(new IllegalStateException("o stock da loja mudou ao reverter uma venda: "
-                                + "jogador " + player + ", " + offer.quantity() + " itens"));
+                    try {
+                        side.putStock(item, offer.quantity());
+                    } catch (RuntimeException e) {
+                        onError.accept(new IllegalStateException("os itens vendidos não couberam no baú: jogador "
+                                + player + ", " + offer.quantity() + " itens", e));
                     }
-                    bag.give(item, offer.quantity());
-                    return failure(error, Result.OWNER_NO_FUNDS);
+                    return Result.SOLD;
                 }, mainThread);
             }, mainThread).thenCompose(r -> r);
         });
