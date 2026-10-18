@@ -20,6 +20,7 @@ import static pt.flawless.fShop.shops.ShopTrade.Result.SOLD;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -77,6 +78,10 @@ class ShopTradeTest {
         @Override
         public String format(long cents) {
             return cents + "c";
+        }
+        @Override
+        public CompletableFuture<Optional<UUID>> getRichest() {
+            return CompletableFuture.completedFuture(Optional.empty());
         }
     }
 
