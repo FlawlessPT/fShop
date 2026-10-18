@@ -22,8 +22,8 @@ public final class ShopActions {
     public void execute(Player player, ShopOffer offer, ItemStack item, boolean buying) {
         PlayerBag bag = new PlayerBag(player);
         CompletableFuture<ShopTrade.Result> result = buying
-                ? trade.buy(player.getUniqueId(), offer, item, bag)
-                : trade.sell(player.getUniqueId(), offer, item, bag);
+                ? trade.buy(player.getUniqueId(), offer, item, bag, trade.serverSide())
+                : trade.sell(player.getUniqueId(), offer, item, bag, trade.serverSide());
         result.thenAccept(r -> report(player, offer, r, buying)).exceptionally(error -> {
             FConsoleLogger.sendConsoleMessage(String.valueOf(error), EMessageTypeEnum.ERROR);
             return null;
@@ -48,6 +48,10 @@ public final class ShopActions {
             case NOT_ENOUGH_ITEMS -> fail(player, "§cNão tens itens suficientes para vender.");
             case INSUFFICIENT_FUNDS -> fail(player, "§cNão tens dinheiro suficiente.");
             case NO_ACCOUNT -> fail(player, "§cA tua conta de economia não existe. Volta a entrar no servidor.");
+            case NO_STOCK -> fail(player, "§cEsta loja está sem stock.");
+            case SHOP_FULL -> fail(player, "§cO baú da loja está cheio.");
+            case OWNER_NO_FUNDS -> fail(player, "§cO dono da loja não tem dinheiro suficiente.");
+            case OWN_SHOP -> fail(player, "§cNão podes trocar com a tua própria loja.");
             case BUSY -> player.sendMessage("§cAguarda que a transação anterior termine.");
             case ERROR -> fail(player, "§cErro ao processar a transação. Tenta mais tarde.");
         }
