@@ -79,10 +79,10 @@ public final class ShopMenu implements InventoryHolder {
 
         inventory.setItem(BUY_SLOT, offer.canBuy()
                 ? button(GREEN, "§aComprar", buyLore(offer, format.apply(offer.buyCents())))
-                : button(GRAY, "§7Indisponível", List.of("§7Esta loja não vende este item.")));
+                : button(GRAY, "§7Indisponível", List.of("§7Esta loja não permite a compra deste item.")));
         inventory.setItem(SELL_SLOT, offer.canSell()
                 ? button(RED, "§cVender", sellLore(offer, format.apply(offer.sellCents())))
-                : button(GRAY, "§7Indisponível", List.of("§7Esta loja não compra este item.")));
+                : button(GRAY, "§7Indisponível", List.of("§7Esta loja não permite a venda deste item.")));
         return inventory;
     }
 
