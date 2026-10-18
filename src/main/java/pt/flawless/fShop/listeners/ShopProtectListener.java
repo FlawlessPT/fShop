@@ -9,10 +9,17 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import pt.flawless.fShop.managers.SignShopManager;
+import pt.flawless.fShop.shops.PlayerShops;
+import pt.flawless.fShop.shops.ShopKey;
 import pt.flawless.fapi.sounds.FSound;
 
 /** Só o dono parte a sua loja de jogador; os admins ({@code fshop.admin}) partem tudo; lojas do servidor só os admins. */
 public class ShopProtectListener implements Listener {
+    private final PlayerShops shops;
+
+    public ShopProtectListener(PlayerShops shops) {
+        this.shops = shops;
+    }
 
     /** Regra de quem pode partir uma loja. {@code owner} só conta para lojas de jogador. */
     static boolean canBreak(boolean admin, boolean serverShop, boolean owner) {
@@ -30,7 +37,10 @@ public class ShopProtectListener implements Listener {
         SignShopManager shop = new SignShopManager(sign, player);
         if (!shop.isShop()) return;
 
-        if (canBreak(player.hasPermission("fshop.admin"), shop.isServerShop(), shop.canEdit())) return;
+        boolean owner = shops.get(ShopKey.of(block))
+                .map(o -> o.uuid().equals(player.getUniqueId()))
+                .orElseGet(shop::canEdit);
+        if (canBreak(player.hasPermission("fshop.admin"), shop.isServerShop(), owner)) return;
 
         e.setCancelled(true);
         FSound.fail(player);

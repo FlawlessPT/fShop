@@ -69,9 +69,9 @@ public class FShop extends JavaPlugin {
         ShopSides sides = new ShopSides(economy, shops);
         Bukkit.getPluginManager().registerEvents(new SignClickListener(actions, items, shops, sides), this);
         Bukkit.getPluginManager().registerEvents(new ShopMenuListener(actions, items, sides), this);
-        Bukkit.getPluginManager().registerEvents(new ShopCreateListener(items), this);
-        Bukkit.getPluginManager().registerEvents(new ShopBreakListener(items), this);
-        Bukkit.getPluginManager().registerEvents(new ShopProtectListener(), this);
+        Bukkit.getPluginManager().registerEvents(new ShopCreateListener(items, shops), this);
+        Bukkit.getPluginManager().registerEvents(new ShopBreakListener(items, shops), this);
+        Bukkit.getPluginManager().registerEvents(new ShopProtectListener(shops), this);
 
         enabledOk = true;
         consoleLogger.sendEnablePluginMessage();

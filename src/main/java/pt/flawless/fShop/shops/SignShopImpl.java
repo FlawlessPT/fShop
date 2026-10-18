@@ -19,15 +19,15 @@ public class SignShopImpl {
         this.signShop = signShop;
     }
 
-    public void createPlayerShop() {
-        createShop(ShopType.PlayerShop);
+    public boolean createPlayerShop() {
+        return createShop(ShopType.PlayerShop);
     }
 
-    public void createServerShop() {
-        createShop(ShopType.ServerShop);
+    public boolean createServerShop() {
+        return createShop(ShopType.ServerShop);
     }
 
-    private void createShop(ShopType shopType) {
+    private boolean createShop(ShopType shopType) {
         SignChangeEvent sign = signShop.getCreatableSign();
         Player player = signShop.getPlayer();
 
@@ -42,7 +42,7 @@ public class SignShopImpl {
             FSound.fail(player);
             player.sendMessage("§cErro ao criar loja. Argumentos em falta.");
 
-            return;
+            return false;
         }
 
         try {
@@ -55,11 +55,13 @@ public class SignShopImpl {
 
             FSound.success(player);
             player.sendMessage("§eLoja criada com sucesso.");
+            return true;
         } catch (Exception e1) {
             sign.getBlock().breakNaturally();
             FSound.fail(player);
             FConsoleLogger.sendConsoleMessage(e1.toString(), EMessageTypeEnum.ERROR);
             player.sendMessage("§cErro ao criar loja.");
+            return false;
         }
     }
 

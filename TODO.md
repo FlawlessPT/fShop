@@ -16,7 +16,7 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 - [x] Testes automáticos (`ShopOffer`, `ShopTrade`, `SignShopManager`).
 
 ## Depois da integração com a economia
-- Lojas de jogador: baú de stock ligado à placa, `transfer` para o dono, persistência (tabela `fshop_shops` com localização, dono por UUID, item com data value, quantidade e preços) e reconhecimento depois de reiniciar.
+- [x] Lojas de jogador: ver a secção "Lojas de jogador (baú)" abaixo.
 - Código morto a decidir: `MessagesManager`, `VariablesManager`, `ItemAddCommand` (referem o plugin antigo).
 - `removeColorCodes` do `SignShopManager` devia ir para o fAPI.
 - Dependência `sqlite-jdbc` do `build.gradle.kts` já não é usada.
@@ -24,7 +24,7 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 - Placas apagadas por outros meios que não partir (física, explosões, `/setblock`) deixam uma linha órfã em `fshop_items` (inofensiva; é limpa quando se recria uma placa no mesmo sítio).
 - Linhas de `fshop_items` que não descodificam são ignoradas em silêncio no arranque (registar).
 - Um item definido gasto/danificado é entregue gasto (a venda ignora durabilidade, a compra não a repõe).
-- Os itens das lojas de jogador (baú) continuam por fazer e vão reutilizar a tabela `fshop_items`.
+- Os itens das lojas de jogador (baú) também usam `fshop_items`.
 - Corrida put-depois-remove: gravar e apagar a mesma chave em seguida correm em threads diferentes do pool e podem trocar de ordem (encadear futuros por chave resolvia).
 - `compileOnly sqlite-jdbc` no `build.gradle.kts` pode já não ser necessário (não removido).
 - Lojas antigas sem registo em `fshop_items` passam a trocar um item simples (`new ItemStack(material)`) com comparação estrita, por isso já não aceitam itens encantados, renomeados ou com data value diferente de 0 (antes comparavam só o Material); para as ter completas o admin tem de recriar a placa e voltar a definir o item.
@@ -46,3 +46,8 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 - Proteção das lojas: só cobre `BlockBreakEvent`. Explosões, o bloco de suporte da placa partido (a placa cai sozinha), pistões e fogo ainda podem destruir lojas. Uma placa qualquer cuja linha 3 pareça `C 10` conta como loja e fica protegida (`SignShopManager.isShop`).
 - Teste manual no jogo: sem `fshop.admin`, agachado e botão esquerdo numa loja do servidor ou de outro jogador não parte e mostra "Não podes partir esta loja."; partir a própria loja de jogador funciona; um admin parte tudo.
 - Risco residual nas lojas de jogador: se o dono esvaziar o baú (por exemplo com um funil) enquanto o pagamento de uma venda está em curso e o pagamento falhar por outro motivo que não saldo (ex.: o dono gastou o dinheiro entretanto), os itens do vendedor são devolvidos e ficam duplicados; mitigado pela verificação prévia de saldo; a solução completa seria bloquear o baú durante a troca.
+
+## Lojas de jogador (baú)
+- [x] Lojas de jogador: placa de parede presa a um baú; troca pelo baú real; dono por UUID em `fshop_shops`; aviso ao dono por chat se estiver online (offline não recebe nada).
+- Limites: sem proteção de baús (fica no plugin de terrenos); a compra a partir do baú entrega o item do modelo (durabilidade do modelo), não a pilha exata do baú; baú partido deixa a linha de `fshop_shops` órfã até se recriar a placa; sem limite nem custo de lojas por jogador; placas de jogador antigas têm de ser recriadas; ideia futura: notificar donos offline, registo de transações.
+- Teste manual no jogo: (1) placa de chão ou de parede sem baú: a placa parte-se com "tem de estar presa a um baú"; (2) criar com baú simples e com baú duplo; (3) o dono define o item com o item na mão; outro jogador não consegue; (4) comprar com stock, sem stock, com o dono a ser o próprio (recusa); (5) vender com o baú cheio e com o dono sem dinheiro; (6) o dono online recebe a mensagem de compra e de venda; offline não; (7) shift + botão direito abre o menu "Loja de <nome>"; (8) um baú colado à placa mas não preso a ela (placa noutra face) não conta; (9) reiniciar o servidor mantém o dono; (10) partir a placa apaga o registo e a loja recriada no mesmo sítio não herda o dono; (11) só o dono e admins partem a placa; (12) uma placa de jogador antiga diz que é antiga.
