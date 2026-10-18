@@ -9,7 +9,9 @@ import org.bukkit.block.Block;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
+import pt.flawless.fapi.enums.FInventorySize;
+import pt.flawless.fapi.inventory.FInventory;
+import pt.flawless.fapi.items.FItemStack;
 
 /**
  * Menu da loja: baú de 27 espaços com o item exato ao centro, o botão de compra à esquerda e o de venda à direita.
@@ -70,28 +72,24 @@ public final class ShopMenu implements InventoryHolder {
 
     public static Inventory create(ShopKey key, ShopOffer offer, ItemStack item, LongFunction<String> format) {
         ShopMenu holder = new ShopMenu(key);
-        Inventory inventory = Bukkit.createInventory(holder, SIZE, "Loja");
+        FInventory menu = new FInventory(holder, FInventorySize.SIZE_27, "Loja");
+        Inventory inventory = menu.getInventory();
         holder.inventory = inventory;
 
         ItemStack shown = item.clone();
         shown.setAmount(Math.min(offer.quantity(), shown.getMaxStackSize()));
         inventory.setItem(ITEM_SLOT, shown);
 
-        inventory.setItem(BUY_SLOT, offer.canBuy()
+        menu.setItem(BUY_SLOT, offer.canBuy()
                 ? button(GREEN, "§aComprar", buyLore(offer, format.apply(offer.buyCents())))
                 : button(GRAY, "§7Indisponível", List.of("§7Esta loja não permite a compra deste item.")));
-        inventory.setItem(SELL_SLOT, offer.canSell()
+        menu.setItem(SELL_SLOT, offer.canSell()
                 ? button(RED, "§cVender", sellLore(offer, format.apply(offer.sellCents())))
                 : button(GRAY, "§7Indisponível", List.of("§7Esta loja não permite a venda deste item.")));
         return inventory;
     }
 
-    private static ItemStack button(short color, String name, List<String> lore) {
-        ItemStack stack = new ItemStack(Material.WOOL, 1, color);
-        ItemMeta meta = stack.getItemMeta();
-        meta.setDisplayName(name);
-        meta.setLore(lore);
-        stack.setItemMeta(meta);
-        return stack;
+    private static FItemStack button(short color, String name, List<String> lore) {
+        return new FItemStack(Material.WOOL, 1, name).setDurability(color).setLore(lore);
     }
 }
