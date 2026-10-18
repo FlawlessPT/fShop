@@ -47,11 +47,6 @@ public final class ShopTrade {
         this.onError = onError;
     }
 
-    /** A contraparte da loja do servidor. */
-    public ShopSide serverSide() {
-        return new ServerSide(economy);
-    }
-
     public String format(long cents) {
         return economy.format(cents);
     }

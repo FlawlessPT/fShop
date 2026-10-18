@@ -1,6 +1,5 @@
 package pt.flawless.fShop.shops;
 
-import java.util.Optional;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
@@ -9,7 +8,14 @@ import org.bukkit.inventory.ItemStack;
 /** Resolve uma placa numa loja pronta a trocar. */
 public final class ShopLookup {
 
-    public record Ready(ShopOffer offer, ItemStack item) {
+    public record Ready(ShopOffer offer, ItemStack item, ShopSide side) {
+    }
+
+    /** {@code ready} nulo e {@code error} nulo: não é uma loja pronta (sem aviso). {@code error}: mostrar ao jogador. */
+    public record Resolution(Ready ready, String error) {
+        static Resolution notReady() {
+            return new Resolution(null, null);
+        }
     }
 
     private ShopLookup() {
@@ -22,15 +28,22 @@ public final class ShopLookup {
                 .orElseGet(() -> new ItemStack(offer.material()));
     }
 
-    /** Loja do servidor completa (item definido e oferta válida) neste bloco; vazio caso contrário. */
-    public static Optional<Ready> ready(Block block, Player player, ShopItems items) {
+    /** Loja completa (item definido, oferta válida e contraparte resolvida) neste bloco. */
+    public static Resolution ready(Block block, Player player, ShopItems items, ShopSides sides) {
         if (block == null || !(block.getState() instanceof Sign sign)) {
-            return Optional.empty();
+            return Resolution.notReady();
         }
         SignShopImpl shop = new SignShopImpl(new SignShop(sign, player));
-        if (!shop.isSignShop() || !shop.isServerShop() || !shop.hasItem()) {
-            return Optional.empty();
+        if (!shop.isSignShop() || !shop.hasItem()) {
+            return Resolution.notReady();
         }
-        return shop.offer().map(offer -> new Ready(offer, itemFor(items, ShopKey.of(block), offer)));
+        return shop.offer().map(offer -> {
+            ShopSides.Resolution side = sides.resolve(block, shop.isServerShop());
+            if (side.side() == null) {
+                return new Resolution(null, side.error());
+            }
+            return new Resolution(
+                    new Ready(offer, itemFor(items, ShopKey.of(block), offer), side.side()), null);
+        }).orElseGet(Resolution::notReady);
     }
 }

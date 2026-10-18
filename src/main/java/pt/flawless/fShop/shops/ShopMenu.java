@@ -70,9 +70,10 @@ public final class ShopMenu implements InventoryHolder {
         return List.of("§7" + offer.quantity() + "x " + offer.itemName(), "§7Recebes: §f" + price);
     }
 
-    public static Inventory create(ShopKey key, ShopOffer offer, ItemStack item, LongFunction<String> format) {
+    public static Inventory create(ShopKey key, ShopOffer offer, ItemStack item, LongFunction<String> format,
+            String title) {
         ShopMenu holder = new ShopMenu(key);
-        FInventory menu = new FInventory(holder, FInventorySize.SIZE_27, "Loja");
+        FInventory menu = new FInventory(holder, FInventorySize.SIZE_27, title);
         Inventory inventory = menu.getInventory();
         holder.inventory = inventory;
 

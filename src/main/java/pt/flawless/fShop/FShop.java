@@ -10,10 +10,13 @@ import pt.flawless.fShop.listeners.ShopProtectListener;
 import pt.flawless.fShop.listeners.ShopCreateListener;
 import pt.flawless.fShop.listeners.ShopMenuListener;
 import pt.flawless.fShop.listeners.SignClickListener;
+import pt.flawless.fShop.shops.PlayerShops;
 import pt.flawless.fShop.shops.ShopActions;
 import pt.flawless.fShop.shops.ShopItems;
 import pt.flawless.fShop.shops.ShopMenu;
+import pt.flawless.fShop.shops.ShopSides;
 import pt.flawless.fShop.shops.ShopTrade;
+import pt.flawless.fShop.shops.SqlPlayerShopRepository;
 import pt.flawless.fShop.shops.SqlShopItemRepository;
 import pt.flawless.fapi.database.DatabaseService;
 import pt.flawless.fapi.database.Databases;
@@ -41,12 +44,16 @@ public class FShop extends JavaPlugin {
         }
 
         ShopItems items;
+        PlayerShops shops;
         try {
             DatabaseService database = Databases.get();
-            database.migrate(this, List.of("db/fshop/V001__create_shop_items.sql"));
+            database.migrate(this, List.of("db/fshop/V001__create_shop_items.sql", "db/fshop/V002__create_shops.sql"));
             items = new ShopItems(new SqlShopItemRepository(database),
                     error -> consoleLogger.sendMessage(String.valueOf(error), EMessageTypeEnum.ERROR));
             items.load();
+            shops = new PlayerShops(new SqlPlayerShopRepository(database),
+                    error -> consoleLogger.sendMessage(String.valueOf(error), EMessageTypeEnum.ERROR));
+            shops.load();
         } catch (Exception e) {
             consoleLogger.sendMessage("não foi possível carregar as lojas: " + e.getMessage(), EMessageTypeEnum.ERROR);
             getServer().getPluginManager().disablePlugin(this);
@@ -59,8 +66,9 @@ public class FShop extends JavaPlugin {
                 error -> consoleLogger.sendMessage(String.valueOf(error), EMessageTypeEnum.ERROR));
 
         ShopActions actions = new ShopActions(trade);
-        Bukkit.getPluginManager().registerEvents(new SignClickListener(actions, items), this);
-        Bukkit.getPluginManager().registerEvents(new ShopMenuListener(actions, items), this);
+        ShopSides sides = new ShopSides(economy, shops);
+        Bukkit.getPluginManager().registerEvents(new SignClickListener(actions, items, shops, sides), this);
+        Bukkit.getPluginManager().registerEvents(new ShopMenuListener(actions, items, sides), this);
         Bukkit.getPluginManager().registerEvents(new ShopCreateListener(items), this);
         Bukkit.getPluginManager().registerEvents(new ShopBreakListener(items), this);
         Bukkit.getPluginManager().registerEvents(new ShopProtectListener(), this);

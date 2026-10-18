@@ -1,6 +1,5 @@
 package pt.flawless.fShop.listeners;
 
-import java.util.Optional;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -11,16 +10,19 @@ import pt.flawless.fShop.shops.ShopActions;
 import pt.flawless.fShop.shops.ShopItems;
 import pt.flawless.fShop.shops.ShopLookup;
 import pt.flawless.fShop.shops.ShopMenu;
+import pt.flawless.fShop.shops.ShopSides;
 import pt.flawless.fapi.sounds.FSound;
 
 /** Cliques e arrastos no menu da loja. Nada pode sair nem entrar no menu. */
 public class ShopMenuListener implements Listener {
     private final ShopActions actions;
     private final ShopItems items;
+    private final ShopSides sides;
 
-    public ShopMenuListener(ShopActions actions, ShopItems items) {
+    public ShopMenuListener(ShopActions actions, ShopItems items, ShopSides sides) {
         this.actions = actions;
         this.items = items;
+        this.sides = sides;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -33,14 +35,15 @@ public class ShopMenuListener implements Listener {
         ShopMenu.Action action = ShopMenu.actionFor(e.getRawSlot());
         if (action == ShopMenu.Action.NONE || !(e.getWhoClicked() instanceof Player player)) return;
 
-        Optional<ShopLookup.Ready> ready = ShopLookup.ready(menu.block(), player, items);
-        if (ready.isEmpty()) {
+        ShopLookup.Resolution resolution = ShopLookup.ready(menu.block(), player, items, sides);
+        if (resolution.ready() == null) {
             player.closeInventory();
             FSound.fail(player);
-            player.sendMessage("§cEsta loja já não está disponível.");
+            player.sendMessage(resolution.error() != null ? resolution.error() : "§cEsta loja já não está disponível.");
             return;
         }
-        actions.execute(player, ready.get().offer(), ready.get().item(), action == ShopMenu.Action.BUY);
+        ShopLookup.Ready ready = resolution.ready();
+        actions.execute(player, ready.offer(), ready.item(), ready.side(), action == ShopMenu.Action.BUY);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

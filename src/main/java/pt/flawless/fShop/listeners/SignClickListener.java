@@ -11,12 +11,14 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import pt.flawless.fShop.shops.PlayerShops;
 import pt.flawless.fShop.shops.ShopActions;
 import pt.flawless.fShop.shops.ShopItems;
 import pt.flawless.fShop.shops.ShopKey;
 import pt.flawless.fShop.shops.ShopLookup;
 import pt.flawless.fShop.shops.ShopMenu;
 import pt.flawless.fShop.shops.ShopOffer;
+import pt.flawless.fShop.shops.ShopSides;
 import pt.flawless.fShop.shops.SignShop;
 import pt.flawless.fShop.shops.SignShopImpl;
 import pt.flawless.fapi.enums.EMessageTypeEnum;
@@ -28,9 +30,15 @@ public class SignClickListener implements Listener {
 
     private final ShopItems items;
 
-    public SignClickListener(ShopActions actions, ShopItems items) {
+    private final PlayerShops shops;
+
+    private final ShopSides sides;
+
+    public SignClickListener(ShopActions actions, ShopItems items, PlayerShops shops, ShopSides sides) {
         this.actions = actions;
         this.items = items;
+        this.shops = shops;
+        this.sides = sides;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -48,11 +56,16 @@ public class SignClickListener implements Listener {
         // Agachado: botão direito abre o menu da loja; botão esquerdo deixa partir a placa
         if (player.isSneaking()) {
             if (action == Action.RIGHT_CLICK_BLOCK) {
-                Optional<ShopLookup.Ready> ready = ShopLookup.ready(block, player, items);
-                if (ready.isPresent()) {
+                ShopLookup.Resolution resolution = ShopLookup.ready(block, player, items, sides);
+                if (resolution.ready() != null) {
+                    ShopLookup.Ready ready = resolution.ready();
                     e.setCancelled(true);
-                    player.openInventory(ShopMenu.create(
-                            ShopKey.of(block), ready.get().offer(), ready.get().item(), actions::format));
+                    player.openInventory(ShopMenu.create(ShopKey.of(block), ready.offer(), ready.item(),
+                            actions::format, ready.side().title()));
+                } else if (resolution.error() != null) {
+                    e.setCancelled(true);
+                    FSound.fail(player);
+                    player.sendMessage(resolution.error());
                 }
             }
             return;
@@ -66,18 +79,23 @@ public class SignClickListener implements Listener {
             if (!signShop.isSignShop()) return;
             e.setCancelled(true);
 
+            boolean serverShop = signShop.isServerShop();
+            if (!serverShop && shops.get(ShopKey.of(block)).isEmpty()) {
+                FSound.fail(player);
+                player.sendMessage("§cEsta loja é antiga. Parte-a e cria-a de novo.");
+                return;
+            }
+
             if (!signShop.hasItem()) {
-                if (action == Action.RIGHT_CLICK_BLOCK && signShop.canEdit()) {
+                boolean mayEdit = serverShop
+                        ? signShop.canEdit()
+                        : shops.get(ShopKey.of(block)).map(o -> o.uuid().equals(player.getUniqueId())).orElse(false);
+                if (action == Action.RIGHT_CLICK_BLOCK && mayEdit) {
                     ItemStack inHand = player.getItemInHand();
                     if (signShop.insertItemInHand(inHand)) {
                         items.put(ShopKey.of(block), inHand);
                     }
                 }
-                return;
-            }
-
-            if (!signShop.isServerShop()) {
-                player.sendMessage("§cLojas de jogador ainda não estão disponíveis.");
                 return;
             }
 
@@ -90,8 +108,14 @@ public class SignClickListener implements Listener {
 
             boolean buying = action == Action.RIGHT_CLICK_BLOCK;
             ShopOffer shopOffer = offer.get();
+            ShopSides.Resolution side = sides.resolve(block, serverShop);
+            if (side.side() == null) {
+                FSound.fail(player);
+                player.sendMessage(side.error());
+                return;
+            }
             ItemStack item = ShopLookup.itemFor(items, ShopKey.of(block), shopOffer);
-            actions.execute(player, shopOffer, item, buying);
+            actions.execute(player, shopOffer, item, side.side(), buying);
         } catch (Exception exception) {
             FConsoleLogger.sendConsoleMessage(String.valueOf(exception), EMessageTypeEnum.ERROR);
             e.setCancelled(true);

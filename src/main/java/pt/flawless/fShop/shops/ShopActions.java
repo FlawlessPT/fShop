@@ -1,6 +1,7 @@
 package pt.flawless.fShop.shops;
 
 import java.util.concurrent.CompletableFuture;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import pt.flawless.fapi.enums.EMessageTypeEnum;
@@ -19,27 +20,29 @@ public final class ShopActions {
         return trade.format(cents);
     }
 
-    public void execute(Player player, ShopOffer offer, ItemStack item, boolean buying) {
+    public void execute(Player player, ShopOffer offer, ItemStack item, ShopSide side, boolean buying) {
         PlayerBag bag = new PlayerBag(player);
         CompletableFuture<ShopTrade.Result> result = buying
-                ? trade.buy(player.getUniqueId(), offer, item, bag, trade.serverSide())
-                : trade.sell(player.getUniqueId(), offer, item, bag, trade.serverSide());
-        result.thenAccept(r -> report(player, offer, r, buying)).exceptionally(error -> {
+                ? trade.buy(player.getUniqueId(), offer, item, bag, side)
+                : trade.sell(player.getUniqueId(), offer, item, bag, side);
+        result.thenAccept(r -> report(player, offer, side, r, buying)).exceptionally(error -> {
             FConsoleLogger.sendConsoleMessage(String.valueOf(error), EMessageTypeEnum.ERROR);
             return null;
         });
     }
 
-    private void report(Player player, ShopOffer offer, ShopTrade.Result result, boolean buying) {
+    private void report(Player player, ShopOffer offer, ShopSide side, ShopTrade.Result result, boolean buying) {
         String what = offer.quantity() + "x " + offer.itemName();
         switch (result) {
             case BOUGHT -> {
                 FSound.success(player);
                 withBalance(player, "§aCompraste §7" + what + " §apor §7" + trade.format(offer.buyCents()) + "§a.");
+                notifyOwner(player, offer, side, true);
             }
             case SOLD -> {
                 FSound.success(player);
                 withBalance(player, "§aVendeste §7" + what + " §apor §7" + trade.format(offer.sellCents()) + "§a.");
+                notifyOwner(player, offer, side, false);
             }
             case NOT_AVAILABLE -> fail(player, buying
                     ? "§cEsta loja não vende este item."
@@ -55,6 +58,18 @@ public final class ShopActions {
             case BUSY -> player.sendMessage("§cAguarda que a transação anterior termine.");
             case ERROR -> fail(player, "§cErro ao processar a transação. Tenta mais tarde.");
         }
+    }
+
+    /** Numa loja de jogador, avisa o dono se estiver online; a loja do servidor não avisa ninguém. */
+    private void notifyOwner(Player trader, ShopOffer offer, ShopSide side, boolean traderBought) {
+        side.ownerId().map(Bukkit::getPlayer).ifPresent(owner -> {
+            String what = offer.quantity() + "x " + offer.itemName();
+            owner.sendMessage(traderBought
+                    ? "§e" + trader.getName() + " §acomprou §7" + what + " §apor §7" + trade.format(offer.buyCents())
+                            + " §ana tua loja."
+                    : "§e" + trader.getName() + " §avendeu-te §7" + what + " §apor §7"
+                            + trade.format(offer.sellCents()) + "§a.");
+        });
     }
 
     /** Envia a mensagem com o saldo atual no fim; sem saldo (erro), envia só a mensagem. */
