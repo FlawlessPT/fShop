@@ -5,6 +5,7 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 ## Funcionalidades
 - [x] Ligar as lojas à economia (fEconomy) via `EconomyApi` do fAPI.
 - [x] Guardar o item de cada loja do servidor (tabela fshop_items, cache em memória).
+- [x] Proteção das lojas: cada jogador só parte a sua loja de jogador, os admins (`fshop.admin`) partem tudo e as lojas do servidor só os admins (`ShopProtectListener`).
 
 ## Código
 - [ ] O `MessagesManager` lê as mensagens de `getConfig()` (`Mensagens.playeroff`, etc.), mas o plugin não tem `config.yml` nos recursos nem chama `saveDefaultConfig()`: os valores vêm `null`. Criar o `config.yml` e gravá-lo por omissão.
@@ -42,3 +43,5 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 - Teste manual no jogo: abrir o menu, fazer /reload e confirmar que o menu fecha e não dá para tirar o item.
 - O menu e a transação não verificam a distância à placa (um jogador pode abrir o menu, afastar-se e continuar a trocar; `getBlockAt` pode carregar o chunk da placa).
 - Se o admin redefinir o item com um menu aberto, o menu continua a mostrar o item antigo (a troca já usa o novo).
+- Proteção das lojas: só cobre `BlockBreakEvent`. Explosões, o bloco de suporte da placa partido (a placa cai sozinha), pistões e fogo ainda podem destruir lojas. Uma placa qualquer cuja linha 3 pareça `C 10` conta como loja e fica protegida (`SignShopManager.isShop`).
+- Teste manual no jogo: sem `fshop.admin`, agachado e botão esquerdo numa loja do servidor ou de outro jogador não parte e mostra "Não podes partir esta loja."; partir a própria loja de jogador funciona; um admin parte tudo.

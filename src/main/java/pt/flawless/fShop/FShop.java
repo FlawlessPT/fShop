@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import pt.flawless.fShop.listeners.ShopBreakListener;
+import pt.flawless.fShop.listeners.ShopProtectListener;
 import pt.flawless.fShop.listeners.ShopCreateListener;
 import pt.flawless.fShop.listeners.ShopMenuListener;
 import pt.flawless.fShop.listeners.SignClickListener;
@@ -62,6 +63,7 @@ public class FShop extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ShopMenuListener(actions, items), this);
         Bukkit.getPluginManager().registerEvents(new ShopCreateListener(items), this);
         Bukkit.getPluginManager().registerEvents(new ShopBreakListener(items), this);
+        Bukkit.getPluginManager().registerEvents(new ShopProtectListener(), this);
 
         enabledOk = true;
         consoleLogger.sendEnablePluginMessage();
