@@ -39,23 +39,35 @@ public class SignShopManager {
         String signText;
 
         if (signShopType.equalsIgnoreCase("C")) {
-            signText = "§2C " + price;
+            signText = "§2C " + suffix(price);
         } else if (signShopType.equalsIgnoreCase("V")) {
-            signText = "§cV " + price;
+            signText = "§cV " + suffix(price);
         } else if (signShopType.equalsIgnoreCase("CV")) {
-            int space = price.indexOf(" ");
-            String buyPrice = price.substring(0, space);
-            String sellPrice = price.substring(space + 1);
+            String[] parts = price.trim().split("\\s*/\\s*|\\s+");
+            if (parts.length != 2 || parts[0].isEmpty() || parts[1].isEmpty()) throw new Exception();
+            String buyPrice = parts[0];
+            String sellPrice = parts[1];
 
-            if (buyPrice.isEmpty() || sellPrice.isEmpty()) throw new Exception();
-
-            // Max 16 chars
-            signText = "§6C " + buyPrice + " §0/ §cV " + sellPrice;
+            // Linha de placa: 15 chars no máximo (cores incluídas); mais é cortado e a loja deixa de ser reconhecida
+            signText = "§2C " + suffix(buyPrice) + "/§cV " + suffix(sellPrice);
         } else {
             throw new Exception();
         }
 
         this.creatableSign.setLine(2, signText);
+    }
+
+    /** Sufixo do preço normalizado: k minúsculo, M e B maiúsculos. */
+    private static String suffix(String price) {
+        if (price.isEmpty()) return price;
+        char last = price.charAt(price.length() - 1);
+        String head = price.substring(0, price.length() - 1);
+        return switch (last) {
+            case 'K', 'k' -> head + 'k';
+            case 'm', 'M' -> head + 'M';
+            case 'b', 'B' -> head + 'B';
+            default -> price;
+        };
     }
 
     public void setItemName(String itemName) {
@@ -112,7 +124,8 @@ public class SignShopManager {
 
     private boolean matchShopTypePattern(String text) {
         // String regex = "^(C|V)\\s+\\d+$|^C\\s+\\d+\\s*/\\s*V\\s+\\d+$";
-        String regex = "^([CV])\\s+\\d+$|^C\\s+\\d+\\s*/\\s*V\\s+\\d+$";
+        String p = "([0-9]+(?:[.,][0-9]+)?[kKmMbB]?)";
+        String regex = "^[CV]\\s+" + p + "$|^C\\s+" + p + "\\s*/\\s*V\\s+" + p + "$";
         return text.matches(regex);
     }
 
