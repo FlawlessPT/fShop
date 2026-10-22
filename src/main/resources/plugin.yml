@@ -3,6 +3,10 @@ main: pt.flawless.fShop.FShop
 description: Shop plugin
 version: 1.0
 depend: [fAPI, fDatabase, fEconomy]
+commands:
+  signshop:
+    description: Gere as lojas de placas (limpa o item da loja que estás a olhar)
+    usage: "/signshop resetitem | /signshop help"
 permissions:
   fshop.admin:
     description: Allows creating and configuring server shops
