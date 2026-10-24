@@ -1,6 +1,5 @@
 package pt.flawless.fShop.shops;
 
-import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
@@ -40,12 +39,7 @@ public final class SqlShopItemRepository implements ShopItemRepository {
 
     @Override
     public CompletableFuture<Void> save(ShopKey key, ItemStack item) {
-        String encoded;
-        try {
-            encoded = ItemCodec.encode(item);
-        } catch (IOException e) {
-            return CompletableFuture.failedFuture(e);
-        }
+        String encoded = ItemCodec.encode(item);
         return database.runAsync(connection -> {
             try (PreparedStatement ps = connection.prepareStatement(SAVE)) {
                 ps.setString(1, key.world());

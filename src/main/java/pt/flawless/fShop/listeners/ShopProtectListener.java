@@ -1,6 +1,7 @@
 package pt.flawless.fShop.listeners;
 
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
@@ -30,7 +31,7 @@ public class ShopProtectListener implements Listener {
     public void onBreak(BlockBreakEvent e) {
         Block block = e.getBlock();
         Material type = block.getType();
-        if (type != Material.SIGN_POST && type != Material.WALL_SIGN) return;
+        if (!Tag.SIGNS.isTagged(type)) return;
         if (!(block.getState() instanceof Sign sign)) return;
 
         Player player = e.getPlayer();

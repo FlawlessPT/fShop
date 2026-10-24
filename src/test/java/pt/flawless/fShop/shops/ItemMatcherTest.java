@@ -21,7 +21,7 @@ class ItemMatcherTest {
     private static ItemStack enchanted(Material material) {
         ItemStack stack = new ItemStack(material);
         ItemMeta meta = stack.getItemMeta();
-        meta.addEnchant(Enchantment.DAMAGE_ALL, 5, true);
+        meta.addEnchant(Enchantment.SHARPNESS, 5, true);
         stack.setItemMeta(meta);
         return stack;
     }
@@ -56,8 +56,8 @@ class ItemMatcherTest {
 
     @Test
     void differentDataValueDoesNotMatch() {
-        assertFalse(ItemMatcher.matches(new ItemStack(Material.WOOL, 1, (short) 1), new ItemStack(Material.WOOL, 1, (short) 2)));
-        assertTrue(ItemMatcher.matches(new ItemStack(Material.WOOL, 1, (short) 1), new ItemStack(Material.WOOL, 1, (short) 1)));
+        assertFalse(ItemMatcher.matches(new ItemStack(Material.ORANGE_WOOL), new ItemStack(Material.MAGENTA_WOOL)));
+        assertTrue(ItemMatcher.matches(new ItemStack(Material.ORANGE_WOOL), new ItemStack(Material.ORANGE_WOOL)));
     }
 
     @Test

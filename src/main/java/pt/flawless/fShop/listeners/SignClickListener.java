@@ -2,6 +2,7 @@ package pt.flawless.fShop.listeners;
 
 import java.util.Optional;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
@@ -10,6 +11,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import pt.flawless.fShop.shops.PlayerShops;
 import pt.flawless.fShop.shops.ShopActions;
@@ -46,12 +48,14 @@ public class SignClickListener implements Listener {
         Action action = e.getAction();
         if (action != Action.RIGHT_CLICK_BLOCK && action != Action.LEFT_CLICK_BLOCK) return;
 
+        if (e.getHand() != EquipmentSlot.HAND) return;
+
         Player player = e.getPlayer();
         Block block = e.getClickedBlock();
         if (block == null) return;
 
         Material type = block.getType();
-        if (type != Material.SIGN_POST && type != Material.WALL_SIGN) return;
+        if (!Tag.SIGNS.isTagged(type)) return;
 
         // Agachado: botão direito abre o menu da loja; botão esquerdo deixa partir a placa
         if (player.isSneaking()) {
@@ -91,7 +95,7 @@ public class SignClickListener implements Listener {
                         ? signShop.canEdit()
                         : shops.get(ShopKey.of(block)).map(o -> o.uuid().equals(player.getUniqueId())).orElse(false);
                 if (action == Action.RIGHT_CLICK_BLOCK && mayEdit) {
-                    ItemStack inHand = player.getItemInHand();
+                    ItemStack inHand = player.getInventory().getItemInMainHand();
                     if (signShop.insertItemInHand(inHand)) {
                         items.put(ShopKey.of(block), inHand);
                     }

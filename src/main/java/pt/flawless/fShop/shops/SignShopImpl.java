@@ -1,7 +1,8 @@
 package pt.flawless.fShop.shops;
 
 import java.util.Optional;
-import org.apache.commons.lang.WordUtils;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.SignChangeEvent;
@@ -73,7 +74,9 @@ public class SignShopImpl {
         if (signShopManager.withItemInShop()) return false;
 
         String itemName = itemInHand.getType().name().toLowerCase();
-        String formattedItemName = WordUtils.capitalizeFully(itemName.replace("_", " "));
+        String formattedItemName = Arrays.stream(itemName.split("_"))
+                .map(w -> Character.toUpperCase(w.charAt(0)) + w.substring(1))
+                .collect(Collectors.joining(" "));
         signShopManager.setItemName(formattedItemName);
         return true;
     }

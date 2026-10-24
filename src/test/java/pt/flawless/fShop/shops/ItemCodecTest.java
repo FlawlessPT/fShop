@@ -20,10 +20,9 @@ class ItemCodecTest {
 
     @Test
     void plainItemRoundTrips() throws Exception {
-        ItemStack original = new ItemStack(Material.WOOL, 1, (short) 5);
+        ItemStack original = new ItemStack(Material.LIME_WOOL);
         ItemStack decoded = ItemCodec.decode(ItemCodec.encode(original)).orElseThrow();
-        assertEquals(Material.WOOL, decoded.getType());
-        assertEquals((short) 5, decoded.getDurability());
+        assertEquals(Material.LIME_WOOL, decoded.getType());
     }
 
     @Test

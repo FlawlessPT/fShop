@@ -1,6 +1,5 @@
 package pt.flawless.fShop.commands;
 
-import java.util.HashSet;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.command.Command;
@@ -44,7 +43,7 @@ public class SignShopCommand implements CommandExecutor {
             return true;
         }
 
-        Block block = player.getTargetBlock((HashSet<Byte>) null, 5);
+        Block block = player.getTargetBlock((java.util.Set<org.bukkit.Material>) null, 5);
         if (block == null || !(block.getState() instanceof Sign sign)) {
             fail(player, "§cOlha para a placa da loja (a menos de 5 blocos).");
             return true;

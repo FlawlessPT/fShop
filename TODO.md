@@ -55,3 +55,4 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 - Baú partido a meio de uma troca perde os itens (só o dono perde).
 - Outro jogador pode prender a sua placa a outra face do baú de alguém ou à outra metade de um baú duplo (resolve-se com o plugin de terrenos).
 - A compra a partir do baú de um jogador que sai a meio perdia os itens (corrigido: `PlayerBag.has`/`canHold` devolvem falso se o jogador está offline).
+- Migração Paper 1.21: `TestServer` passou a no-op (o `ItemFactory` do Paper exige servidor real), por isso os testes com `ItemMeta` (`ItemCodecTest`, `ItemMatcherTest`) só compilam; não foram corridos nem adaptados. Linhas `fshop_items` antigas (`nbt:`/Bukkit) são ignoradas.

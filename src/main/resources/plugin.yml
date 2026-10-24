@@ -2,6 +2,7 @@ name: fShop
 main: pt.flawless.fShop.FShop
 description: Shop plugin
 version: 1.0
+api-version: '1.21'
 depend: [fAPI, fDatabase, fEconomy]
 commands:
   signshop:

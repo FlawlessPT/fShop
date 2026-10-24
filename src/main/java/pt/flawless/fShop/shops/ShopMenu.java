@@ -26,10 +26,10 @@ public final class ShopMenu implements InventoryHolder {
 
     public enum Action { BUY, SELL, NONE }
 
-    // data values da lã (WOOL)
-    private static final short GREEN = 5;
-    private static final short GRAY = 7;
-    private static final short RED = 14;
+    // lã dos botões
+    private static final Material GREEN = Material.LIME_WOOL;
+    private static final Material GRAY = Material.GRAY_WOOL;
+    private static final Material RED = Material.RED_WOOL;
 
     private final ShopKey key;
     private Inventory inventory;
@@ -90,7 +90,7 @@ public final class ShopMenu implements InventoryHolder {
         return inventory;
     }
 
-    private static FItemStack button(short color, String name, List<String> lore) {
-        return new FItemStack(Material.WOOL, 1, name).setDurability(color).setLore(lore);
+    private static FItemStack button(Material wool, String name, List<String> lore) {
+        return new FItemStack(wool, 1, name).setLore(lore);
     }
 }
