@@ -1,6 +1,7 @@
 package pt.flawless.fShop.listeners;
 
 import java.util.Optional;
+import io.papermc.paper.event.player.PlayerOpenSignEvent;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
@@ -122,6 +123,14 @@ public class SignClickListener implements Listener {
             actions.execute(player, shopOffer, item, side.side(), buying);
         } catch (Exception exception) {
             FConsoleLogger.sendConsoleMessage(String.valueOf(exception), EMessageTypeEnum.ERROR);
+            e.setCancelled(true);
+        }
+    }
+
+    /** Placas de loja nunca abrem o editor (clique com tinta, corante ou placa na mão). */
+    @EventHandler(ignoreCancelled = true)
+    public void onOpenSign(PlayerOpenSignEvent e) {
+        if (new SignShopImpl(new SignShop(e.getSign(), e.getPlayer())).isSignShop()) {
             e.setCancelled(true);
         }
     }
