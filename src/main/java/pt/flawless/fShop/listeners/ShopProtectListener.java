@@ -1,6 +1,9 @@
 package pt.flawless.fShop.listeners;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
@@ -41,10 +44,26 @@ public class ShopProtectListener implements Listener {
         boolean owner = shops.get(ShopKey.of(block))
                 .map(o -> o.uuid().equals(player.getUniqueId()))
                 .orElseGet(shop::canEdit);
-        if (canBreak(player.hasPermission("fshop.admin"), shop.isServerShop(), owner)) return;
+        if (!canBreak(player.hasPermission("fshop.admin"), shop.isServerShop(), owner)) {
+            e.setCancelled(true);
+            FSound.fail(player);
+            player.sendMessage("§cNão podes partir esta loja.");
+            return;
+        }
 
-        e.setCancelled(true);
-        FSound.fail(player);
-        player.sendMessage("§cNão podes partir esta loja.");
+        // Só se parte agachado, como o SignClickListener promete (criativo e ferramentas partem sem clique)
+        if (!player.isSneaking()) {
+            e.setCancelled(true);
+            resync(block, player);
+        }
+    }
+
+    /** O cliente já partiu a placa por previsão: reenvia bloco e texto. */
+    static void resync(Block block, Player player) {
+        Plugin plugin = JavaPlugin.getProvidingPlugin(ShopProtectListener.class);
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            player.sendBlockChange(block.getLocation(), block.getBlockData());
+            if (block.getState() instanceof Sign s) player.sendBlockUpdate(block.getLocation(), s);
+        });
     }
 }

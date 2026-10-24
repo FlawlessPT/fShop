@@ -83,6 +83,7 @@ public class SignClickListener implements Listener {
         try {
             if (!signShop.isSignShop()) return;
             e.setCancelled(true);
+            if (action == Action.LEFT_CLICK_BLOCK) ShopProtectListener.resync(block, player);
 
             boolean serverShop = signShop.isServerShop();
             if (!serverShop && shops.get(ShopKey.of(block)).isEmpty()) {
