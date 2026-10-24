@@ -56,3 +56,7 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 - Outro jogador pode prender a sua placa a outra face do baú de alguém ou à outra metade de um baú duplo (resolve-se com o plugin de terrenos).
 - A compra a partir do baú de um jogador que sai a meio perdia os itens (corrigido: `PlayerBag.has`/`canHold` devolvem falso se o jogador está offline).
 - Migração Paper 1.21: `TestServer` passou a no-op (o `ItemFactory` do Paper exige servidor real), por isso os testes com `ItemMeta` (`ItemCodecTest`, `ItemMatcherTest`) só compilam; não foram corridos nem adaptados. Linhas `fshop_items` antigas (`nbt:`/Bukkit) são ignoradas.
+
+## Migração para Paper 1.21 (24/10/2026)
+- Refazer à mão as lojas com item definido: as linhas antigas de `fshop_items` (`nbt:`/Base64 do 1.8) deixam de ler-se e a loja troca o item simples do material (sem encantamentos nem nome) até se recriar a placa e voltar a definir o item.
+- Testes: o `TestServer` ficou sem efeito (o CraftServer 1.8 já não existe), por isso os testes com `ItemMeta` falham em runtime; refazê-los ou apagá-los. `ItemMatcher` usa `setDurability`/`getDurability` (deprecated).
