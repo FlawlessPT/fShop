@@ -60,3 +60,5 @@ Pendências conhecidas deste plugin (15/10/2026). Riscar quando feito.
 ## Migração para Paper 1.21 (24/10/2026)
 - Refazer à mão as lojas com item definido: as linhas antigas de `fshop_items` (`nbt:`/Base64 do 1.8) deixam de ler-se e a loja troca o item simples do material (sem encantamentos nem nome) até se recriar a placa e voltar a definir o item.
 - Testes: o `TestServer` ficou sem efeito (o CraftServer 1.8 já não existe), por isso os testes com `ItemMeta` falham em runtime; refazê-los ou apagá-los. `ItemMatcher` usa `setDurability`/`getDurability` (deprecated).
+
+- Reload de config exige `/freload plugin` (as mensagens estão em campos estáticos do `MessagesManager`).
