@@ -12,3 +12,4 @@
 .gradle/
 build/
 libraries/*.jar
+logs/
